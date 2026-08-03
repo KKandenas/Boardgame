@@ -5,8 +5,8 @@
 // BÅDA spelarnas klienter kan räkna ut och skriva samma resultat utan att
 // krocka (se game.js för varför det är säkert).
 
-import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js";
-import { createRound, applyMove as applyMoveToRound, winsNeeded } from "./game.js";
+import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=7";
+import { createRound, applyMove as applyMoveToRound, winsNeeded } from "./game.js?v=7";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // utan I, O, 0, 1 — lätta att förväxla
 const CODE_LENGTH = 4;
