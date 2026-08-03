@@ -41,6 +41,15 @@ body.bg-start {
         url("assets/bg-dogs.jpg") center bottom / cover no-repeat;
 }
 
+/* Genomskinligt kort på startsidorna så bakgrundsbilden skymtar igenom
+   — men med en blur bakom (backdrop-filter) så texten ovanpå ändå
+   förblir skarp och läsbar oavsett vad som råkar synas bakom just då. */
+body.bg-start .card {
+    background: rgba(23, 25, 35, 0.72);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
 #app {
     min-height: 100vh;
     min-height: 100dvh;
