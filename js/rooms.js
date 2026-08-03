@@ -6,9 +6,9 @@
 // krocka. Helt agnostisk om VILKET spel som spelas — det avgörs av
 // registret i js/games/registry.js (room.gameType pekar ut modulen).
 
-import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=10";
-import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=10";
-import { winsNeeded } from "./games/shared.js?v=10";
+import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=11";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=11";
+import { winsNeeded } from "./games/shared.js?v=11";
 
 function createRound(gameId, roundNumber, startingPlayerId) {
     return {

@@ -7,11 +7,11 @@
 // alltid löses inom samma atomära skrivning som själva draget, utan
 // någon separat "auto-advance"-mekanism.
 
-import { otherSymbolOf } from "./shared.js?v=10";
+import { otherSymbolOf } from "./shared.js?v=11";
 
 export const meta = {
     id: "othello",
-    label: "Otello",
+    label: "Othello",
     description: "Vänd motståndarens brickor — flest brickor när ingen kan dra mer vinner.",
     rows: 8,
     cols: 8,
@@ -80,6 +80,10 @@ export function createBoard() {
     board[idx(4, 3)] = "X";
     board[idx(4, 4)] = "O";
     return board;
+}
+
+export function symbolLabel(symbol) {
+    return symbol === "X" ? "Svart" : "Vitt";
 }
 
 // Avgör vems tur det blir näst (eller om ronden är slut) efter att

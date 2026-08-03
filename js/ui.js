@@ -4,8 +4,8 @@
 // här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
 // från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells, winsNeeded } from "./games/shared.js?v=10";
-import { getGame } from "./games/registry.js?v=10";
+import { boardToCells, winsNeeded } from "./games/shared.js?v=11";
+import { getGame } from "./games/registry.js?v=11";
 
 const screens = {
     home: document.getElementById("screen-home"),
@@ -81,11 +81,12 @@ export function renderGame(room, myPlayerId, selectedCell = null) {
 
     const meChip = document.getElementById("chip-me");
     const oppChip = document.getElementById("chip-opp");
+    const symbolLabel = game.symbolLabel || ((s) => s);
     document.getElementById("chip-me-name").textContent = playerLabel(me, "Du");
-    document.getElementById("chip-me-symbol").textContent = me.symbol;
+    document.getElementById("chip-me-symbol").textContent = symbolLabel(me.symbol);
     document.getElementById("chip-me-score").textContent = room.score?.[myPlayerId] ?? 0;
     document.getElementById("chip-opp-name").textContent = opp ? playerLabel(opp, "Motståndare") : "Väntar…";
-    document.getElementById("chip-opp-symbol").textContent = opp ? opp.symbol : "?";
+    document.getElementById("chip-opp-symbol").textContent = opp ? symbolLabel(opp.symbol) : "?";
     document.getElementById("chip-opp-score").textContent = oppId ? (room.score?.[oppId] ?? 0) : 0;
 
     meChip.classList.toggle("active-turn", !round.winner && round.turn === myPlayerId);

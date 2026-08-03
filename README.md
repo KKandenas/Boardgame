@@ -14,7 +14,7 @@ backend. Inga byggverktyg krävs.
   varje tur (tryck på en egen bricka för att välja den, sedan på en
   tom ruta för att flytta dit) — brädet blir aldrig fullt, så partiet
   fortsätter tills någon får tre i rad.
-- **Otello** (Reversi) — klassiska 8x8-reglerna. Lägg en bricka så att
+- **Othello** (Reversi) — klassiska 8x8-reglerna. Lägg en bricka så att
   den fångar in en eller flera av motståndarens brickor i en rak linje
   (vågrätt, lodrätt eller diagonalt); de fångade brickorna vänds till
   din färg. Saknar man lagliga drag hoppar turen automatiskt över.
@@ -77,7 +77,7 @@ eller Pythons inbyggda server:
         registry.js          Register över alla spel (id → modul) — hit läggs nya spel
         shared.js            Hjälpfunktioner gemensamma för alla spel
         tictactoe.js         Luffarschack: regler + UI-hooks
-        othello.js           Otello: regler + UI-hooks
+        othello.js           Othello: regler + UI-hooks
 
 ## Lägga till ett nytt spel
 

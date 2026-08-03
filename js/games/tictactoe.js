@@ -9,7 +9,7 @@
 // (cellInteractable/onCellClick/statusText) som gör att ui.js/main.js
 // kan vara generiska över vilket spel som spelas.
 
-import { otherSymbolOf } from "./shared.js?v=10";
+import { otherSymbolOf } from "./shared.js?v=11";
 
 export const meta = {
     id: "tictactoe",
@@ -56,6 +56,10 @@ function checkResult(board) {
 
 export function createBoard() {
     return {};
+}
+
+export function symbolLabel(symbol) {
+    return symbol;
 }
 
 export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
