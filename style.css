@@ -693,6 +693,136 @@ h2 {
     font-size: 0.85rem;
 }
 
+/* --- Sänka skepp: placeringsfas + de två haven i stridsfasen --- */
+.board--battleship {
+    display: block;
+    background: transparent;
+    aspect-ratio: auto;
+}
+
+.ss-placement {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ss-ship-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ss-ship-item {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.ss-ship-item.selected {
+    border-color: #fbbf24;
+    color: var(--text);
+}
+
+.ss-ship-item.placed {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.ss-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ss-hint-text {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.ss-ready-btn {
+    width: 100%;
+}
+
+.ss-board-label {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.ss-boards {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ss-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
+    background: #0d2a4a;
+    border: 1px solid #071a30;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.ss-grid-primary {
+    aspect-ratio: 1 / 1;
+}
+
+.ss-grid-own:not(.ss-grid-primary) {
+    width: 46%;
+    margin: 0 auto 8px 0;
+    aspect-ratio: 1 / 1;
+}
+
+.ss-cell {
+    appearance: none;
+    border: 1px solid #0a2038;
+    background: #123a63;
+    border-radius: 2px;
+    padding: 0;
+    aspect-ratio: 1 / 1;
+    cursor: pointer;
+    touch-action: manipulation;
+    position: relative;
+}
+
+.ss-cell:disabled { cursor: default; }
+
+.ss-cell.ship {
+    background: #4b5563;
+    border-color: #374151;
+}
+
+.ss-cell.miss::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 28%;
+    height: 28%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.ss-cell.hit {
+    background: var(--danger);
+    border-color: #7f1d1d;
+}
+
+.ss-cell.hit.sunk {
+    background: #450a0a;
+    border-color: #000;
+}
+
 .hidden {
     display: none !important;
 }

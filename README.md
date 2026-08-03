@@ -27,6 +27,13 @@ backend. Inga byggverktyg krävs.
   man spelar tärningarna i den ordning som maximerar hur många som går
   att använda när läget är delvis blockerat — se kommentaren högst upp
   i `js/games/backgammon.js` för detaljer.
+- **Sänka skepp** — klassiska reglerna på ett 10x10-hav med fem skepp
+  (Hangarfartyg 5, Slagskepp 4, Kryssare 3, Ubåt 3, Jagare 2). Placera
+  flottan i hemlighet (manuellt eller med "Slumpa"), skjut sedan
+  omväxlande mot motståndarens hav — turen går alltid vidare efter ett
+  skott oavsett träff eller miss. Den som sänker hela motståndarflottan
+  först vinner ronden. Se "Kända begränsningar" nedan angående
+  flottans synlighet i databasen.
 
 Fler spel läggs till i `js/games/` — se "Lägga till ett nytt spel"
 nedan.
@@ -86,6 +93,7 @@ eller Pythons inbyggda server:
         tictactoe.js         Luffarschack: regler + UI-hooks (rutnätsbräde)
         othello.js           Othello: regler + UI-hooks (rutnätsbräde)
         backgammon.js         Backgammon: regler + eget bräde (renderBoard)
+        battleship.js          Sänka skepp: regler + eget bräde (placering + strid, renderBoard)
 
 ## Lägga till ett nytt spel
 
@@ -146,6 +154,9 @@ Lägg sedan till modulen i `js/games/registry.js` och en radioknapp i
 
 - Firebase Security Rules är inte konfigurerade — rumsdatan är i
   praktiken läsbar/skrivbar av alla klienter. Bör låsas ner innan
-  spelet används av folk du inte litar på.
+  spelet används av folk du inte litar på. Detta är extra relevant för
+  **Sänka skepp**: appen döljer bara motståndarens flotta i UI:t, den
+  gömmer den inte på riktigt — en spelare som tittar i webbläsarens
+  nätverksflik kan i teorin se var motståndarens skepp ligger.
 - Gamla/övergivna rum städas inte bort ur databasen.
 - Ingen chatt eller emote-funktion mellan spelarna ännu.
