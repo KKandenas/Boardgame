@@ -5,9 +5,9 @@
 import {
     createRoom, joinRoom, makeMove, resolveRoundEnd, startRematch,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=13";
-import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js?v=13";
-import { getGame } from "./games/registry.js?v=13";
+} from "./rooms.js?v=14";
+import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js?v=14";
+import { getGame } from "./games/registry.js?v=14";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
@@ -16,7 +16,7 @@ import { getGame } from "./games/registry.js?v=13";
 // annars riskerar olika filer att cachas separat och hamna i otakt —
 // vilket var precis orsaken till att "rummet hittades inte" kvarstod
 // trots att fixen redan var pushad.
-export const APP_VERSION = "build 13 · 2026-08-03";
+export const APP_VERSION = "build 14 · 2026-08-03";
 
 let currentCode = null;
 let myPlayerId = null;

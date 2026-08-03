@@ -478,6 +478,11 @@ h2 {
     padding: 4px;
 }
 
+/* Triangelformen är BARA en bakgrundsdekoration (::before, clip-path,
+   z-index:0) — själva knappen är okantad så att bricksstacken (z-index:1)
+   aldrig klipps bort. Tidigare låg clip-path direkt på knappen, vilket
+   klippte bort de flesta brickorna i en stack (bara de närmast triangelns
+   breda kant syntes). */
 .bg-point {
     appearance: none;
     border: none;
@@ -488,21 +493,34 @@ h2 {
     align-items: flex-start;
     justify-content: center;
     position: relative;
-    background: #3a2416;
+    background: transparent;
+}
+
+.bg-point::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
 }
 
 .bg-point.top {
     align-items: flex-start;
+}
+
+.bg-point.top::before {
     clip-path: polygon(8% 0%, 92% 0%, 50% 100%);
 }
 
 .bg-point.bottom {
     align-items: flex-end;
+}
+
+.bg-point.bottom::before {
     clip-path: polygon(50% 0%, 92% 100%, 8% 100%);
 }
 
-.bg-point.shade-a { background: #4a3220; }
-.bg-point.shade-b { background: #6b4a2c; }
+.bg-point.shade-a::before { background: #4a3220; }
+.bg-point.shade-b::before { background: #6b4a2c; }
 
 .bg-point:disabled { cursor: default; }
 
@@ -521,9 +539,18 @@ h2 {
     transform: translate(-50%, -50%);
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.45);
+    z-index: 2;
 }
 
 .bg-stack {
+    /* Måste ha en DEFINITIV bredd — annars blir det ett cirkulärt
+       storleksberoende: .bg-checker vill vara 82% av .bg-stack, men
+       .bg-stack (en icke-sträckt flex-item) krymper annars efter sitt
+       eget innehålls storlek, vilket i praktiken gav brickor med 0px
+       bredd (osynliga, trots att de fanns korrekt i DOM:en). */
+    width: 100%;
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;

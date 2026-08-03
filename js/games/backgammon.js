@@ -19,7 +19,7 @@
 // (bar, slå ut, hem-bärning exakt/övertal, dubbleringstärning,
 // gammon/backgammon) följer de riktiga reglerna.
 
-import { otherSymbolOf } from "./shared.js?v=13";
+import { otherSymbolOf } from "./shared.js?v=14";
 
 export const meta = {
     id: "backgammon",
@@ -241,9 +241,15 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
     if (!round || round.winner) return round;
     if (!action) return round;
 
+    // OBS: Firebase Realtime Database lagrar aldrig ett explicit `null`-värde
+    // — en skrivning med `null` TAR BORT nyckeln istället. Ett fält som
+    // "inte satt än" kommer alltså tillbaka som `undefined`, inte `null`.
+    // Därför måste alla kontroller här vara falsy-kontroller (`!round.dice`)
+    // snarare än strikta `=== null`-jämförelser, annars matchar de aldrig
+    // efter en riktig tur-och-retur genom databasen.
     if (action.type === "double") {
-        if (round.turn !== playerId || round.dice !== null || round.pendingDouble) return round;
-        if (round.cubeOwner !== null && round.cubeOwner !== playerId) return round;
+        if (round.turn !== playerId || round.dice || round.pendingDouble) return round;
+        if (round.cubeOwner && round.cubeOwner !== playerId) return round;
         return { ...round, pendingDouble: true, doubleOfferedBy: playerId, turn: otherPlayerId };
     }
 
@@ -272,7 +278,7 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
     }
 
     if (action.type === "roll") {
-        if (round.turn !== playerId || round.dice !== null || round.pendingDouble) return round;
+        if (round.turn !== playerId || round.dice || round.pendingDouble) return round;
         const d1 = 1 + Math.floor(Math.random() * 6);
         const d2 = 1 + Math.floor(Math.random() * 6);
         const dice = d1 === d2 ? [d1, d1, d1, d1] : [d1, d2];
@@ -485,7 +491,7 @@ export function renderBoard(container, ctx) {
 
     const cubeEl = document.createElement("div");
     cubeEl.className = "bg-cube";
-    const cubeOwnerLabel = round.cubeOwner === null ? "mitten" : round.cubeOwner === myPlayerId ? "du" : "motst.";
+    const cubeOwnerLabel = !round.cubeOwner ? "mitten" : round.cubeOwner === myPlayerId ? "du" : "motst.";
     cubeEl.innerHTML = `<strong>${round.cubeValue}×</strong><span class="bg-cube-owner">${cubeOwnerLabel}</span>`;
     cubeEl.title = "Dubbleringstärning";
     panel.appendChild(cubeEl);
@@ -519,8 +525,8 @@ export function renderBoard(container, ctx) {
         declineBtn.textContent = `Ge upp (${round.cubeValue}×)`;
         declineBtn.addEventListener("click", () => sendAction({ type: "declineDouble" }));
         actionsEl.appendChild(declineBtn);
-    } else if (myTurn && !round.pendingDouble && round.dice === null) {
-        const canDouble = round.cubeOwner === null || round.cubeOwner === myPlayerId;
+    } else if (myTurn && !round.pendingDouble && !round.dice) {
+        const canDouble = !round.cubeOwner || round.cubeOwner === myPlayerId;
         if (canDouble) {
             const doubleBtn = document.createElement("button");
             doubleBtn.type = "button";
