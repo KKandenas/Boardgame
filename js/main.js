@@ -5,9 +5,9 @@
 import {
     createRoom, joinRoom, makeMove, resolveRoundEnd, startRematch,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=9";
-import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js?v=9";
-import { isPlacingPhase } from "./game.js?v=9";
+} from "./rooms.js?v=10";
+import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js?v=10";
+import { getGame } from "./games/registry.js?v=10";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
@@ -16,7 +16,7 @@ import { isPlacingPhase } from "./game.js?v=9";
 // annars riskerar olika filer att cachas separat och hamna i otakt —
 // vilket var precis orsaken till att "rummet hittades inte" kvarstod
 // trots att fixen redan var pushad.
-export const APP_VERSION = "build 9 · 2026-08-03";
+export const APP_VERSION = "build 10 · 2026-08-03";
 
 let currentCode = null;
 let myPlayerId = null;
@@ -117,11 +117,12 @@ document.getElementById("form-create").addEventListener("submit", async (e) => {
     e.preventDefault();
     setError("create", "");
     const name = document.getElementById("create-name").value.trim().slice(0, 20);
+    const gameId = document.querySelector('input[name="gameId"]:checked').value;
     const bestOf = Number(document.querySelector('input[name="bestOf"]:checked').value);
     const submitBtn = e.target.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     try {
-        const { code, playerId } = await createRoom(bestOf, name);
+        const { code, playerId } = await createRoom(gameId, bestOf, name);
         currentCode = code;
         myPlayerId = playerId;
         subscribe(code);
@@ -167,7 +168,7 @@ function setupLobbyLinks(code) {
     if (navigator.share) {
         shareBtn.classList.remove("hidden");
         shareBtn.onclick = () => {
-            navigator.share({ title: "Luffarschack", text: `Spela luffarschack mot mig! Rumskod: ${code}`, url }).catch(() => {});
+            navigator.share({ title: "Luffarschack", text: `Spela mot mig! Rumskod: ${code}`, url }).catch(() => {});
         };
     } else {
         shareBtn.classList.add("hidden");
@@ -191,37 +192,37 @@ document.getElementById("btn-lobby-cancel").addEventListener("click", () => {
 });
 
 // --- Spelbrädet ---
-// Placeringsfas: klicka en tom ruta för att sätta ut en bricka.
-// Flyttfas (efter 3 utplacerade brickor var): klicka en egen bricka för
-// att välja den, klicka sedan en tom ruta för att flytta dit. Klick på
-// samma bricka igen avmarkerar den.
-for (let i = 0; i < 9; i++) {
-    document.getElementById(`cell-${i}`).addEventListener("click", () => {
-        if (!currentCode || !myPlayerId || !lastRoom?.round) return;
-        const round = lastRoom.round;
-        const me = lastRoom.players?.[myPlayerId];
-        if (!me || round.winner || round.turn !== myPlayerId) return;
+// Cellerna byggs dynamiskt av ui.js (olika spel har olika bräddimension),
+// så klicken fångas med EN delegerad lyssnare på #board istället för en
+// per cell. Själva klicklogiken (direkt drag, tvåstegs val+flytt, etc.)
+// avgörs helt av den aktuella spelmodulens onCellClick — main.js vet
+// inget om enskilda spelregler.
+document.getElementById("board").addEventListener("click", (e) => {
+    const cellEl = e.target.closest(".cell");
+    if (!cellEl || !currentCode || !myPlayerId || !lastRoom?.round) return;
+    const cellIndex = Number(cellEl.id.slice("cell-".length));
 
-        const cellValue = round.board?.[i] || null;
+    const round = lastRoom.round;
+    const me = lastRoom.players?.[myPlayerId];
+    if (!me || round.winner || round.turn !== myPlayerId) return;
 
-        if (isPlacingPhase(round.board, me.symbol)) {
-            if (cellValue) return; // upptagen
-            makeMove(currentCode, { type: "place", cell: i }, myPlayerId).catch(() => {});
-            return;
-        }
-
-        if (cellValue === me.symbol) {
-            selectedCell = selectedCell === i ? null : i;
+    const game = getGame(lastRoom.gameId);
+    game.onCellClick({
+        round,
+        board: round.board,
+        myPlayerId,
+        mySymbol: me.symbol,
+        cellIndex,
+        selectedCell,
+        setSelectedCell: (cell) => {
+            selectedCell = cell;
             renderGame(lastRoom, myPlayerId, selectedCell);
-            return;
-        }
-        if (!cellValue && selectedCell !== null) {
-            const from = selectedCell;
-            makeMove(currentCode, { type: "move", from, to: i }, myPlayerId).catch(() => {});
-            selectedCell = null;
-        }
+        },
+        sendAction: (action) => {
+            makeMove(currentCode, action, myPlayerId).catch(() => {});
+        },
     });
-}
+});
 
 document.getElementById("btn-leave-game").addEventListener("click", () => {
     if (!window.confirm("Lämna spelet?")) return;

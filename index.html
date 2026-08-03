@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" href="assets/icon.svg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
     <div id="app">
@@ -19,7 +19,7 @@
         <section class="screen active" id="screen-home">
             <div class="card center">
                 <h1>Luffarschack</h1>
-                <p class="subtitle">Tre i rad mot en kompis — varsin mobil, i realtid.</p>
+                <p class="subtitle">Bräddspel mot en kompis — varsin mobil, i realtid.</p>
                 <div class="button-stack">
                     <button id="btn-show-create" class="btn btn-primary">Skapa rum</button>
                     <button id="btn-show-join" class="btn btn-secondary">Gå med i rum</button>
@@ -35,6 +35,13 @@
                         <span>Ditt namn</span>
                         <input id="create-name" type="text" maxlength="20" placeholder="Spelare 1" autocomplete="off">
                     </label>
+                    <fieldset class="field">
+                        <legend>Spel</legend>
+                        <div class="radio-row">
+                            <label class="radio-chip"><input type="radio" name="gameId" value="tictactoe" checked> Luffarschack</label>
+                            <label class="radio-chip"><input type="radio" name="gameId" value="othello"> Otello</label>
+                        </div>
+                    </fieldset>
                     <fieldset class="field">
                         <legend>Bäst av</legend>
                         <div class="radio-row">
@@ -113,17 +120,7 @@
 
                 <p id="connection-banner" class="connection-banner hidden"></p>
 
-                <div id="board" class="board">
-                    <button class="cell" id="cell-0" type="button"></button>
-                    <button class="cell" id="cell-1" type="button"></button>
-                    <button class="cell" id="cell-2" type="button"></button>
-                    <button class="cell" id="cell-3" type="button"></button>
-                    <button class="cell" id="cell-4" type="button"></button>
-                    <button class="cell" id="cell-5" type="button"></button>
-                    <button class="cell" id="cell-6" type="button"></button>
-                    <button class="cell" id="cell-7" type="button"></button>
-                    <button class="cell" id="cell-8" type="button"></button>
-                </div>
+                <div id="board" class="board"></div>
 
                 <p id="game-status" class="status-text">Din tur</p>
             </div>
@@ -144,6 +141,6 @@
 
     <div id="app-version" class="app-version"></div>
 
-    <script type="module" src="js/main.js?v=9"></script>
+    <script type="module" src="js/main.js?v=10"></script>
 </body>
 </html>

@@ -1,9 +1,11 @@
 // ui.js
 // All DOM-rendering samlad här. Tar emot state (room-objektet från
 // Firebase + vem jag är) och uppdaterar DOM:en. Inga Firebase-anrop i den
-// här filen — bara läsning av data och uppdatering av skärmen.
+// här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
+// från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells, winsNeeded, isPlacingPhase } from "./game.js?v=9";
+import { boardToCells, winsNeeded } from "./games/shared.js?v=10";
+import { getGame } from "./games/registry.js?v=10";
 
 const screens = {
     home: document.getElementById("screen-home"),
@@ -39,6 +41,32 @@ export function renderLobby(room, code) {
         : "Väntar på motståndare…";
 }
 
+// Brädet byggs om i DOM:en bara när spelet (och därmed dimensionerna)
+// faktiskt ändras — annars återanvänds samma knappar mellan renderingar.
+let builtBoardKey = null;
+
+function ensureBoardGrid(game) {
+    const key = `${game.meta.id}:${game.meta.rows}x${game.meta.cols}`;
+    if (builtBoardKey === key) return;
+    builtBoardKey = key;
+
+    const boardEl = document.getElementById("board");
+    boardEl.className = `board ${game.meta.boardClass}`;
+    boardEl.style.gridTemplateColumns = `repeat(${game.meta.cols}, 1fr)`;
+    boardEl.innerHTML = "";
+
+    const count = game.meta.rows * game.meta.cols;
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < count; i++) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cell";
+        btn.id = `cell-${i}`;
+        frag.appendChild(btn);
+    }
+    boardEl.appendChild(frag);
+}
+
 export function renderGame(room, myPlayerId, selectedCell = null) {
     const me = room.players?.[myPlayerId];
     const oppId = getOpponentId(room, myPlayerId);
@@ -46,8 +74,10 @@ export function renderGame(room, myPlayerId, selectedCell = null) {
     const round = room.round;
     if (!me || !round) return;
 
+    const game = getGame(room.gameId);
+    ensureBoardGrid(game);
+
     const myTurn = !round.winner && round.turn === myPlayerId && !!oppId;
-    const placing = isPlacingPhase(round.board, me.symbol);
 
     const meChip = document.getElementById("chip-me");
     const oppChip = document.getElementById("chip-opp");
@@ -63,28 +93,23 @@ export function renderGame(room, myPlayerId, selectedCell = null) {
 
     const need = winsNeeded(room.bestOf);
     document.getElementById("round-indicator").textContent =
-        `Runda ${round.roundNumber} · Bäst av ${room.bestOf} (${need} vinster avgör)`;
+        `${game.meta.label} · Runda ${round.roundNumber} · Bäst av ${room.bestOf} (${need} vinster avgör)`;
 
-    const cells = boardToCells(round.board);
+    const cellCount = game.meta.rows * game.meta.cols;
+    const cells = boardToCells(round.board, cellCount);
     const winSet = new Set(round.winLine || []);
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < cellCount; i++) {
         const cellEl = document.getElementById(`cell-${i}`);
-        cellEl.textContent = cells[i] || "";
+        cellEl.textContent = game.meta.showGlyph ? (cells[i] || "") : "";
         cellEl.classList.toggle("mark-x", cells[i] === "X");
         cellEl.classList.toggle("mark-o", cells[i] === "O");
         cellEl.classList.toggle("win", winSet.has(i));
-        cellEl.classList.toggle("selected", myTurn && !placing && selectedCell === i);
+        cellEl.classList.toggle("selected", selectedCell === i);
 
-        let canInteract;
-        if (!myTurn) {
-            canInteract = false;
-        } else if (placing) {
-            canInteract = !cells[i]; // valfri tom ruta
-        } else {
-            // Flyttfas: egna brickor går att välja, tomma rutor bara om
-            // man redan valt en bricka att flytta.
-            canInteract = cells[i] === me.symbol || (!cells[i] && selectedCell !== null);
-        }
+        const canInteract = game.cellInteractable({
+            round, board: round.board, cellIndex: i, mySymbol: me.symbol, myTurn, selectedCell,
+        });
+        cellEl.classList.toggle("hint", canInteract && !cells[i]);
         cellEl.disabled = !canInteract;
     }
 
@@ -108,17 +133,10 @@ export function renderGame(room, myPlayerId, selectedCell = null) {
         statusEl.textContent = "Motståndaren vann ronden.";
     } else if (!oppId) {
         // hanteras redan ovan (väntar på motståndare)
-    } else if (myTurn) {
-        if (placing) {
-            statusEl.textContent = "Din tur — placera en bricka";
-        } else if (selectedCell !== null) {
-            statusEl.textContent = "Flytta till en tom ruta";
-        } else {
-            statusEl.textContent = "Din tur — välj en bricka att flytta";
-        }
     } else {
-        const oppPlacing = opp && isPlacingPhase(round.board, opp.symbol);
-        statusEl.textContent = oppPlacing ? "Motståndarens tur — placerar…" : "Motståndarens tur — flyttar…";
+        statusEl.textContent = game.statusText({
+            round, board: round.board, myTurn, mySymbol: me.symbol, selectedCell,
+        });
     }
 }
 

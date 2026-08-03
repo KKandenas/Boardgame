@@ -3,10 +3,24 @@
 // spelaridentitet. All skrivning som avgör spelutgången görs via
 // dbTransact på hela rum-noden — det gör operationerna idempotenta så att
 // BÅDA spelarnas klienter kan räkna ut och skriva samma resultat utan att
-// krocka (se game.js för varför det är säkert).
+// krocka. Helt agnostisk om VILKET spel som spelas — det avgörs av
+// registret i js/games/registry.js (room.gameType pekar ut modulen).
 
-import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=9";
-import { createRound, applyAction, winsNeeded } from "./game.js?v=9";
+import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=10";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=10";
+import { winsNeeded } from "./games/shared.js?v=10";
+
+function createRound(gameId, roundNumber, startingPlayerId) {
+    return {
+        roundNumber,
+        board: getGame(gameId).createBoard(),
+        turn: startingPlayerId,
+        startingPlayer: startingPlayerId,
+        winner: null,
+        winLine: null,
+        scored: false,
+    };
+}
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // utan I, O, 0, 1 — lätta att förväxla
 const CODE_LENGTH = 4;
@@ -58,10 +72,11 @@ async function claimUniqueCode() {
     throw new Error("Kunde inte hitta en ledig rumskod. Försök igen.");
 }
 
-export async function createRoom(bestOf, name) {
+export async function createRoom(gameId, bestOf, name) {
     const code = await claimUniqueCode();
     const playerId = generatePlayerId();
     const room = {
+        gameId: gameId || DEFAULT_GAME_ID,
         bestOf,
         hostId: playerId,
         createdAt: Date.now(),
@@ -129,7 +144,7 @@ export async function joinRoom(codeInput, name) {
     let updatedRoom = { ...room, players: updatedPlayers, score: updatedScore };
 
     if (Object.keys(updatedPlayers).length === 2 && room.status === "waiting") {
-        updatedRoom = { ...updatedRoom, status: "playing", round: createRound(1, room.hostId) };
+        updatedRoom = { ...updatedRoom, status: "playing", round: createRound(room.gameId, 1, room.hostId) };
     }
 
     await dbSet(paths.room(code), updatedRoom);
@@ -138,8 +153,8 @@ export async function joinRoom(codeInput, name) {
     return { code, playerId: newId, room: updatedRoom };
 }
 
-// `action` är { type: "place", cell } eller { type: "move", from, to } —
-// se game.js/applyAction för fasreglerna.
+// `action`s form beror på spelet (se respektive js/games/*.js) — t.ex.
+// { type: "place", cell } eller { type: "move", from, to }.
 export async function makeMove(code, action, playerId) {
     const { committed } = await dbTransact(paths.room(code), (current) => {
         if (!current || !current.round) return undefined;
@@ -147,7 +162,8 @@ export async function makeMove(code, action, playerId) {
         const me = players[playerId];
         if (!me) return undefined;
         const otherId = Object.keys(players).find((id) => id !== playerId);
-        const updatedRound = applyAction(current.round, action, playerId, me.symbol, otherId);
+        const game = getGame(current.gameId);
+        const updatedRound = game.applyAction(current.round, action, playerId, me.symbol, otherId);
         if (updatedRound === current.round) return undefined; // ogiltig handling, avbryt tyst
         return { ...current, round: updatedRound };
     });
@@ -189,7 +205,7 @@ export async function resolveRoundEnd(code) {
             ? (playerIds.find((id) => id !== current.hostId) ?? current.hostId)
             : current.hostId;
 
-        return { ...current, score, round: createRound(round.roundNumber + 1, nextStarter) };
+        return { ...current, score, round: createRound(current.gameId, round.roundNumber + 1, nextStarter) };
     });
     return committed;
 }
@@ -205,7 +221,7 @@ export async function startRematch(code) {
             score,
             status: "playing",
             matchWinner: null,
-            round: createRound(1, current.hostId),
+            round: createRound(current.gameId, 1, current.hostId),
         };
     });
     return committed;

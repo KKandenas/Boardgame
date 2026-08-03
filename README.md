@@ -1,27 +1,42 @@
 # Luffarschack
 
-Luffarschack (tre i rad) för mobilen — två spelare, varsin telefon, i
-realtid. Webbaserat, byggt i vanilla HTML/CSS/JavaScript (ES-moduler) med
-Firebase Realtime Database som backend. Inga byggverktyg krävs.
+Bräddspel för mobilen — två spelare, varsin telefon, i realtid, med
+flera spel att välja mellan. Webbaserat, byggt i vanilla
+HTML/CSS/JavaScript (ES-moduler) med Firebase Realtime Database som
+backend. Inga byggverktyg krävs.
+
+## Spel
+
+- **Luffarschack** — tre i rad, klassisk variant med flyttfas: varje
+  spelare har bara 3 brickor. Så länge man har färre än 3 ute placerar
+  man en ny bricka på valfri tom ruta. När alla 3 är utplacerade byter
+  man istället till att FLYTTA en av sina brickor till valfri tom ruta
+  varje tur (tryck på en egen bricka för att välja den, sedan på en
+  tom ruta för att flytta dit) — brädet blir aldrig fullt, så partiet
+  fortsätter tills någon får tre i rad.
+- **Otello** (Reversi) — klassiska 8x8-reglerna. Lägg en bricka så att
+  den fångar in en eller flera av motståndarens brickor i en rak linje
+  (vågrätt, lodrätt eller diagonalt); de fångade brickorna vänds till
+  din färg. Saknar man lagliga drag hoppar turen automatiskt över.
+  Ronden slutar när ingen av spelarna kan dra mer — flest brickor
+  vinner (oavgjort vid lika antal).
+
+Fler spel läggs till i `js/games/` — se "Lägga till ett nytt spel"
+nedan.
 
 ## Så funkar det
 
-1. Spelare 1 trycker **Skapa rum**, väljer bäst av 3/5/7 och får en
-   4-teckens rumskod (och en delningslänk).
+1. Spelare 1 trycker **Skapa rum**, väljer spel och bäst av 3/5/7, och
+   får en 4-teckens rumskod (och en delningslänk).
 2. Spelare 2 trycker **Gå med i rum** och matar in koden — eller öppnar
    delningslänken direkt, då fylls koden i automatiskt.
-3. När båda är anslutna startar första ronden. Varje spelare har bara
-   3 brickor: så länge man har färre än 3 ute placerar man en ny bricka
-   på valfri tom ruta. När alla 3 är utplacerade byter man istället till
-   att FLYTTA en av sina brickor till valfri tom ruta varje tur (tryck
-   på en egen bricka för att välja den, sedan på en tom ruta för att
-   flytta dit) — brädet blir aldrig fullt, så partiet fortsätter tills
-   någon får tre i rad. Varje drag syncas i realtid till motståndarens
-   telefon.
+3. När båda är anslutna startar första ronden med det valda spelets
+   regler. Varje drag syncas i realtid till motståndarens telefon.
 4. Efter varje runda uppdateras ställningen och en ny runda startar
    automatiskt (den som inte började föregående runda börjar nästa).
 5. När någon når tillräckligt många vinster (t.ex. 2 av 3) visas
-   matchresultatet, med möjlighet till revansch i samma rum.
+   matchresultatet, med möjlighet till revansch i samma rum (samma
+   spel som valdes från början).
 
 ## Köra spelet
 
@@ -54,10 +69,35 @@ eller Pythons inbyggda server:
     manifest.json         PWA-manifest ("Lägg till på hemskärmen")
     js/
       firebase.js         Firebase-init + generiska, transaktionssäkra DB-helpers
-      game.js              Ren spellogik: placerings-/flyttfas, vinstdetektering, rondhantering
       rooms.js             Rum: skapa/gå med, spelaridentitet, drag- och rond-/matchövergångar
-      ui.js                All DOM-rendering
+                            — helt agnostisk om VILKET spel som spelas
+      ui.js                All DOM-rendering, bygger brädet dynamiskt utifrån aktivt spel
       main.js              Skärmväxling, formulär, händelsebindning, Firebase-lyssnare
+      games/
+        registry.js          Register över alla spel (id → modul) — hit läggs nya spel
+        shared.js            Hjälpfunktioner gemensamma för alla spel
+        tictactoe.js         Luffarschack: regler + UI-hooks
+        othello.js           Otello: regler + UI-hooks
+
+## Lägga till ett nytt spel
+
+Varje fil i `js/games/` (utom `shared.js`/`registry.js`) exporterar:
+
+    meta              { id, label, description, rows, cols, boardClass, showGlyph }
+    createBoard()      initial bräda för en ny runda
+    applyAction(round, action, playerId, mySymbol, otherPlayerId)
+                       ren funktion, returnerar en NY runda (eller
+                       samma referens om handlingen var ogiltig).
+                       Ansvarar själv för tur-/vinstlogik, inklusive ev.
+                       automatiska passningar (se othello.js).
+    cellInteractable(ctx)   avgör om en ruta ska vara klickbar just nu
+    onCellClick(ctx)         vad som händer vid klick (skicka drag direkt,
+                             eller tvåstegs val+destination, etc.)
+    statusText(ctx)          statustext när det inte är vinst/väntan
+
+Lägg sedan till modulen i `js/games/registry.js` och en radioknapp i
+`index.html` (fieldset "Spel" i #screen-create). Resten av appen
+(rum, matchning, poängräkning, bräd-rendering) är redan generiskt.
 
 ## Teknik i korthet
 
@@ -75,6 +115,9 @@ eller Pythons inbyggda server:
 - Frånkoppling hanteras med Firebase `onDisconnect` — lämnar spelaren
   (stängd flik, tappad uppkoppling) markeras de som frånkopplade och en
   banner visas för motståndaren.
+- Alla interna filer laddas med ett `?v=N`-suffix som bumpas vid varje
+  push, så att GitHub Pages/webbläsarens cache aldrig kan servera en
+  äldre version av en enskild fil.
 
 ## Kända begränsningar (medvetet inte åtgärdade ännu)
 

@@ -401,6 +401,53 @@ h2 {
     box-shadow: 0 0 0 2px #fbbf24 inset;
 }
 
+/* --- Otello: 8x8, brickor renderas som cirklar (ingen text i cellen) --- */
+.board--othello {
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+    background: #14532d;
+    padding: 6px;
+    border-radius: 12px;
+}
+
+.board--othello .cell {
+    background: #1c7a3f;
+    border: 1px solid #0f3d20;
+    border-radius: 4px;
+    position: relative;
+}
+
+.board--othello .cell:not(:disabled):active {
+    transform: none;
+    background: #21903c;
+}
+
+.board--othello .cell.mark-x::after,
+.board--othello .cell.mark-o::after {
+    content: "";
+    width: 78%;
+    height: 78%;
+    border-radius: 50%;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
+}
+
+.board--othello .cell.mark-x::after {
+    background: #16171c;
+}
+
+.board--othello .cell.mark-o::after {
+    background: #f4f4f5;
+}
+
+.board--othello .cell.hint::before {
+    content: "";
+    position: absolute;
+    width: 20%;
+    height: 20%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+}
+
 .hidden {
     display: none !important;
 }
