@@ -1,0 +1,401 @@
+:root {
+    --bg: #0b0c10;
+    --surface: #171923;
+    --surface-2: #1f2230;
+    --border: #2a2e3f;
+    --text: #f3f4f6;
+    --text-dim: #9498a8;
+    --accent: #5eead4;
+    --accent-dim: #1f4a44;
+    --o-color: #f472b6;
+    --o-dim: #4a1f38;
+    --danger: #f87171;
+    --radius: 16px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background: radial-gradient(circle at 50% -10%, #1a1d2b 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    overscroll-behavior: none;
+}
+
+#app {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(20px + var(--safe-top)) 20px calc(20px + var(--safe-bottom));
+}
+
+.screen {
+    display: none;
+    width: 100%;
+    max-width: 420px;
+}
+
+.screen.active {
+    display: flex;
+    justify-content: center;
+}
+
+.card {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.card.center {
+    text-align: center;
+}
+
+h1 {
+    font-size: 2rem;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+}
+
+h2 {
+    font-size: 1.4rem;
+    margin: 0 0 18px;
+}
+
+.subtitle {
+    color: var(--text-dim);
+    margin: 0 0 28px;
+    font-size: 0.95rem;
+}
+
+.button-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.button-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 18px 0;
+}
+
+.btn {
+    appearance: none;
+    border: none;
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.08s ease, opacity 0.15s ease;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #04211c;
+}
+
+.btn-secondary {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    border: none;
+    padding: 0;
+}
+
+.field span, .field legend {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    padding: 0;
+}
+
+.field input[type="text"] {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 14px;
+    font-size: 1rem;
+    color: var(--text);
+    outline: none;
+}
+
+.field input[type="text"]:focus {
+    border-color: var(--accent);
+}
+
+.code-input {
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    font-weight: 700;
+    text-align: center;
+    font-size: 1.3rem !important;
+}
+
+.radio-row {
+    display: flex;
+    gap: 10px;
+}
+
+.radio-chip {
+    flex: 1;
+    text-align: center;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 0;
+    font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+    position: relative;
+}
+
+.radio-chip input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    cursor: pointer;
+}
+
+.radio-chip:has(input:checked) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+}
+
+.error-text {
+    color: var(--danger);
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    margin: 0 0 4px;
+}
+
+.room-code {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 10px;
+    margin: 8px 0 6px;
+}
+
+.status-text {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.match-score {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 8px;
+}
+
+.game-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.icon-btn {
+    appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.round-indicator {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    text-align: right;
+}
+
+.scorebar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.player-chip {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    min-width: 0;
+}
+
+.player-chip.active-turn {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+.chip-symbol {
+    width: 30px;
+    height: 30px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 800;
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+#chip-opp-symbol {
+    background: var(--o-dim);
+    color: var(--o-color);
+}
+
+.chip-name {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chip-score {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.vs {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
+.connection-banner {
+    background: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    color: var(--danger);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    text-align: center;
+    margin: 0;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    aspect-ratio: 1 / 1;
+}
+
+.cell {
+    appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-size: clamp(2rem, 12vw, 3rem);
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.08s ease, background 0.15s ease;
+}
+
+.cell:not(:disabled):active {
+    transform: scale(0.95);
+}
+
+.cell:disabled {
+    cursor: default;
+}
+
+.cell.mark-x {
+    color: var(--accent);
+}
+
+.cell.mark-o {
+    color: var(--o-color);
+}
+
+.cell.win {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+}
+
+.hidden {
+    display: none !important;
+}

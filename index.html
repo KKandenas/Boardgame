@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <title>Luffarschack</title>
+    <meta name="description" content="Luffarschack — tre i rad mot en kompis, varsin mobil, i realtid.">
+    <meta name="theme-color" content="#0b0c10">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+
+        <section class="screen active" id="screen-home">
+            <div class="card center">
+                <h1>Luffarschack</h1>
+                <p class="subtitle">Tre i rad mot en kompis — varsin mobil, i realtid.</p>
+                <div class="button-stack">
+                    <button id="btn-show-create" class="btn btn-primary">Skapa rum</button>
+                    <button id="btn-show-join" class="btn btn-secondary">Gå med i rum</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="screen-create">
+            <div class="card">
+                <h2>Skapa rum</h2>
+                <form id="form-create">
+                    <label class="field">
+                        <span>Ditt namn</span>
+                        <input id="create-name" type="text" maxlength="20" placeholder="Spelare 1" autocomplete="off">
+                    </label>
+                    <fieldset class="field">
+                        <legend>Bäst av</legend>
+                        <div class="radio-row">
+                            <label class="radio-chip"><input type="radio" name="bestOf" value="3"> 3</label>
+                            <label class="radio-chip"><input type="radio" name="bestOf" value="5" checked> 5</label>
+                            <label class="radio-chip"><input type="radio" name="bestOf" value="7"> 7</label>
+                        </div>
+                    </fieldset>
+                    <p class="error-text" id="create-error"></p>
+                    <div class="button-stack">
+                        <button type="submit" class="btn btn-primary">Skapa rum</button>
+                        <button type="button" id="btn-create-back" class="btn btn-ghost">Tillbaka</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="screen" id="screen-join">
+            <div class="card">
+                <h2>Gå med i rum</h2>
+                <form id="form-join">
+                    <label class="field">
+                        <span>Ditt namn</span>
+                        <input id="join-name" type="text" maxlength="20" placeholder="Spelare 2" autocomplete="off">
+                    </label>
+                    <label class="field">
+                        <span>Rumskod</span>
+                        <input id="join-code" type="text" maxlength="4" placeholder="ABCD" autocomplete="off"
+                               autocapitalize="characters" class="code-input" inputmode="text">
+                    </label>
+                    <p class="error-text" id="join-error"></p>
+                    <div class="button-stack">
+                        <button type="submit" class="btn btn-primary">Gå med</button>
+                        <button type="button" id="btn-join-back" class="btn btn-ghost">Tillbaka</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="screen" id="screen-lobby">
+            <div class="card center">
+                <h2>Rumskod</h2>
+                <div id="lobby-code" class="room-code">----</div>
+                <div class="button-row">
+                    <button id="btn-copy-link" class="btn btn-secondary">Kopiera länk</button>
+                    <button id="btn-share-link" class="btn btn-secondary hidden">Dela</button>
+                </div>
+                <p id="lobby-status" class="status-text">
+                    <span class="spinner" aria-hidden="true"></span>
+                    Väntar på motståndare…
+                </p>
+                <button id="btn-lobby-cancel" class="btn btn-ghost">Avbryt</button>
+            </div>
+        </section>
+
+        <section class="screen" id="screen-game">
+            <div class="game-wrap">
+                <div class="topbar">
+                    <button id="btn-leave-game" class="icon-btn" aria-label="Lämna spelet">✕</button>
+                    <div id="round-indicator" class="round-indicator">Runda 1</div>
+                </div>
+
+                <div class="scorebar">
+                    <div id="chip-me" class="player-chip">
+                        <span id="chip-me-symbol" class="chip-symbol">X</span>
+                        <span id="chip-me-name" class="chip-name">Du</span>
+                        <span id="chip-me-score" class="chip-score">0</span>
+                    </div>
+                    <div class="vs">–</div>
+                    <div id="chip-opp" class="player-chip">
+                        <span id="chip-opp-symbol" class="chip-symbol">O</span>
+                        <span id="chip-opp-name" class="chip-name">Motståndare</span>
+                        <span id="chip-opp-score" class="chip-score">0</span>
+                    </div>
+                </div>
+
+                <p id="connection-banner" class="connection-banner hidden"></p>
+
+                <div id="board" class="board">
+                    <button class="cell" id="cell-0" type="button"></button>
+                    <button class="cell" id="cell-1" type="button"></button>
+                    <button class="cell" id="cell-2" type="button"></button>
+                    <button class="cell" id="cell-3" type="button"></button>
+                    <button class="cell" id="cell-4" type="button"></button>
+                    <button class="cell" id="cell-5" type="button"></button>
+                    <button class="cell" id="cell-6" type="button"></button>
+                    <button class="cell" id="cell-7" type="button"></button>
+                    <button class="cell" id="cell-8" type="button"></button>
+                </div>
+
+                <p id="game-status" class="status-text">Din tur</p>
+            </div>
+        </section>
+
+        <section class="screen" id="screen-match-over">
+            <div class="card center">
+                <h2 id="match-over-title">🏆 Du vann matchen!</h2>
+                <p id="match-over-score" class="match-score">3 – 1</p>
+                <div class="button-stack">
+                    <button id="btn-rematch" class="btn btn-primary">Revansch</button>
+                    <button id="btn-home" class="btn btn-ghost">Nytt spel</button>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
