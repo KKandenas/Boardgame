@@ -90,8 +90,15 @@ export async function joinRoom(codeInput, name) {
     // gissade `null` som "rummet finns inte" avbryts allt utan att någonsin
     // fråga servern på riktigt. Det gav felaktigt "Rummet hittades inte"
     // trots att rummet fanns.
-    const existingRoom = await dbGet(paths.room(code));
-    if (!existingRoom) throw new Error("Rummet hittades inte. Kontrollera koden.");
+    let existingRoom;
+    try {
+        existingRoom = await dbGet(paths.room(code));
+    } catch (err) {
+        // Skiljer ut ett riktigt Firebase-fel (t.ex. behörighet nekad) från
+        // "rummet finns inte" — annars ser båda likadana ut för spelaren.
+        throw new Error(`Kunde inte läsa rummet (${err.code || err.message || "okänt fel"}).`);
+    }
+    if (!existingRoom) throw new Error(`Rummet hittades inte (kod: ${code}). Kontrollera koden.`);
 
     const storedId = getStoredPlayerId(code);
     const newId = storedId || generatePlayerId();
