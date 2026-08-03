@@ -399,3 +399,16 @@ h2 {
 .hidden {
     display: none !important;
 }
+
+.app-version {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(6px + var(--safe-bottom));
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    opacity: 0.55;
+    pointer-events: none;
+    letter-spacing: 0.03em;
+}

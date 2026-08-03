@@ -8,6 +8,10 @@ import {
 } from "./rooms.js";
 import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js";
 
+// Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
+// version en telefon faktiskt kör — bra för att felsöka cache-problem.
+export const APP_VERSION = "build 6 · 2026-08-03";
+
 let currentCode = null;
 let myPlayerId = null;
 let unsubscribe = null;
@@ -193,6 +197,7 @@ document.getElementById("btn-home").addEventListener("click", () => {
 
 // --- Start: läs ev. ?code= i länken och hoppa direkt till "gå med" ---
 (function init() {
+    document.getElementById("app-version").textContent = APP_VERSION;
     const params = new URLSearchParams(location.search);
     const codeFromLink = normalizeCode(params.get("code") || "");
     if (codeFromLink) {
