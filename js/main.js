@@ -183,7 +183,7 @@ function setupLobbyLinks(code) {
     if (navigator.share) {
         shareBtn.classList.remove("hidden");
         shareBtn.onclick = () => {
-            navigator.share({ title: "Luffarschack", text: `Spela mot mig! Rumskod: ${code}`, url }).catch(() => {});
+            navigator.share({ title: "Brädspel", text: `Spela mot mig! Rumskod: ${code}`, url }).catch(() => {});
         };
     } else {
         shareBtn.classList.add("hidden");
