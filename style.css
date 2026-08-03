@@ -31,6 +31,16 @@ body {
     overscroll-behavior: none;
 }
 
+/* Bakgrundsbild på "startsidorna" (profil/hem/statistik) — se
+   ui.js showScreen. En mörk gradient läggs ovanpå bilden så den
+   smälter in i det övriga mörka temat istället för att se ut som en
+   hård rektangel bakom kortet. */
+body.bg-start {
+    background:
+        linear-gradient(to bottom, rgba(11, 12, 16, 0.25) 0%, rgba(11, 12, 16, 0.55) 55%, rgba(11, 12, 16, 0.92) 100%),
+        url("assets/bg-dogs.jpg") center bottom / cover no-repeat;
+}
+
 #app {
     min-height: 100vh;
     min-height: 100dvh;

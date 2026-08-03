@@ -109,6 +109,8 @@ eller Pythons inbyggda server:
     index.html          Markup för samtliga skärmar (profil/hem/lobby/spel/statistik)
     style.css            All styling, mobilanpassad (touch-vänlig, safe-area)
     manifest.json         PWA-manifest ("Lägg till på hemskärmen")
+    assets/
+      bg-dogs.jpg           Bakgrundsbild på startsidorna (profil/hem/statistik) — se style.css .bg-start
     js/
       firebase.js         Firebase-init + generiska, transaktionssäkra DB-helpers (inkl. dbPush)
       profiles.js          Globala spelarprofiler (skapa/lista/spara i localStorage) + hämta statsLog
