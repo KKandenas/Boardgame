@@ -46,8 +46,8 @@ body.bg-start {
    förblir skarp och läsbar oavsett vad som råkar synas bakom just då. */
 body.bg-start .card {
     background: rgba(23, 25, 35, 0.72);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
 
 #app {
