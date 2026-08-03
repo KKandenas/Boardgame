@@ -6,16 +6,16 @@ import {
     createRoom, joinRoom, makeMove, finishRound, markReadyForNext,
     cancelWaitingRoom, listenToOpenRooms,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=22";
+} from "./rooms.js?v=23";
 import {
     showScreen, renderLobby, renderGame, setError,
     renderProfileList, setCurrentProfileLabel, populateStatsFilters, renderStatsResults, renderOpenRooms,
-} from "./ui.js?v=22";
-import { getGame } from "./games/registry.js?v=22";
+} from "./ui.js?v=23";
+import { getGame } from "./games/registry.js?v=23";
 import {
     listProfiles, getOrCreateProfileByName, getStoredProfile, storeProfile, clearStoredProfile, fetchStatsLog,
-} from "./profiles.js?v=22";
-import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=22";
+} from "./profiles.js?v=23";
+import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=23";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
@@ -24,7 +24,7 @@ import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=2
 // i index.html, annars riskerar olika filer att cachas separat och hamna
 // i otakt — vilket var precis orsaken till att "rummet hittades inte"
 // kvarstod trots att fixen redan var pushad.
-export const APP_VERSION = "build 22 · 2026-08-04";
+export const APP_VERSION = "build 23 · 2026-08-04";
 
 let currentCode = null;
 let myPlayerId = null;
