@@ -46,6 +46,22 @@ export function winsNeeded(bestOf) {
     return Math.floor(bestOf / 2) + 1;
 }
 
+// Varje spelare har bara 3 brickor. Så länge man har färre än så på
+// brädet placerar man ut nya; därefter flyttar man en befintlig bricka
+// till valfri tom ruta istället. Eftersom turerna alternerar strikt
+// 1-mot-1 hamnar båda spelarna i flyttfasen samtidigt (efter drag 6).
+export const MARKERS_PER_PLAYER = 3;
+
+export function countMarks(board, symbol) {
+    let count = 0;
+    for (let i = 0; i < 9; i++) if (board?.[i] === symbol) count++;
+    return count;
+}
+
+export function isPlacingPhase(board, symbol) {
+    return countMarks(board, symbol) < MARKERS_PER_PLAYER;
+}
+
 // Bygger en ny, tom runda. `startingPlayerId` är vem som får lägga X
 // (och därmed börjar) den här rundan.
 export function createRound(roundNumber, startingPlayerId) {
@@ -60,18 +76,36 @@ export function createRound(roundNumber, startingPlayerId) {
     };
 }
 
-// Applicerar ett drag på en runda och returnerar en NY runda (muterar
-// aldrig indata). Kastar inget — ogiltiga drag returnerar samma runda
-// oförändrad, så anropande kod (Firebase-transaktionen) helt enkelt
-// avbryter skrivningen.
-export function applyMove(round, cellIndex, playerId, mySymbol, otherPlayerId) {
+// Applicerar en handling på en runda och returnerar en NY runda (muterar
+// aldrig indata). Kastar inget — ogiltiga handlingar returnerar samma
+// runda oförändrad (samma referens), så anropande kod (Firebase-
+// transaktionen) helt enkelt avbryter skrivningen.
+//
+// `action` är antingen { type: "place", cell } (placeringsfasen, tills
+// spelaren har MARKERS_PER_PLAYER brickor ute) eller
+// { type: "move", from, to } (flyttfasen därefter — flytta en egen
+// bricka till valfri tom ruta).
+export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
     if (!round || round.winner) return round;
     if (round.turn !== playerId) return round;
-    if (round.board?.[cellIndex]) return round;
 
-    const board = { ...round.board, [cellIndex]: mySymbol };
+    const placing = isPlacingPhase(round.board, mySymbol);
+    let board;
+
+    if (placing) {
+        if (!action || action.type !== "place") return round;
+        if (round.board?.[action.cell]) return round; // upptagen ruta
+        board = { ...round.board, [action.cell]: mySymbol };
+    } else {
+        if (!action || action.type !== "move") return round;
+        if (round.board?.[action.from] !== mySymbol) return round; // inte min bricka
+        if (round.board?.[action.to]) return round; // upptagen ruta
+        board = { ...round.board };
+        delete board[action.from];
+        board[action.to] = mySymbol;
+    }
+
     const result = checkResult(board);
-
     return {
         ...round,
         board,

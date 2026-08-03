@@ -5,8 +5,9 @@
 import {
     createRoom, joinRoom, makeMove, resolveRoundEnd, startRematch,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=8";
-import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js?v=8";
+} from "./rooms.js?v=9";
+import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js?v=9";
+import { isPlacingPhase } from "./game.js?v=9";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
@@ -15,13 +16,19 @@ import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "
 // annars riskerar olika filer att cachas separat och hamna i otakt —
 // vilket var precis orsaken till att "rummet hittades inte" kvarstod
 // trots att fixen redan var pushad.
-export const APP_VERSION = "build 8 · 2026-08-03";
+export const APP_VERSION = "build 9 · 2026-08-03";
 
 let currentCode = null;
 let myPlayerId = null;
 let unsubscribe = null;
 let scheduledRoundNumber = null;
 let roundEndTimer = null;
+
+// Flyttfasens val av "vilken egen bricka ska flyttas" är ren lokal
+// UI-state — motståndaren behöver aldrig se den, bara det färdiga draget.
+let lastRoom = null;
+let selectedCell = null;
+let lastTurnKey = null;
 
 function resetRoundEndTimer() {
     if (roundEndTimer) {
@@ -34,6 +41,9 @@ function leaveRoomState() {
     if (unsubscribe) { unsubscribe(); unsubscribe = null; }
     resetRoundEndTimer();
     scheduledRoundNumber = null;
+    lastRoom = null;
+    selectedCell = null;
+    lastTurnKey = null;
     if (currentCode) forgetRoom(currentCode);
     currentCode = null;
     myPlayerId = null;
@@ -54,10 +64,19 @@ function onRoomUpdate(room) {
     }
 
     if (room.status === "playing") {
-        showScreen("game");
-        renderGame(room, myPlayerId);
-
         const round = room.round;
+        // Ett nytt drag (turen bytte spelare, eller ny runda) gör alltid
+        // ett eventuellt lokalt brickval inaktuellt.
+        const turnKey = round ? `${round.roundNumber}:${round.turn}:${Object.keys(round.board || {}).length}` : null;
+        if (turnKey !== lastTurnKey) {
+            selectedCell = null;
+            lastTurnKey = turnKey;
+        }
+        lastRoom = room;
+
+        showScreen("game");
+        renderGame(room, myPlayerId, selectedCell);
+
         if (round?.winner && !round.scored && scheduledRoundNumber !== round.roundNumber) {
             scheduledRoundNumber = round.roundNumber;
             resetRoundEndTimer();
@@ -172,10 +191,35 @@ document.getElementById("btn-lobby-cancel").addEventListener("click", () => {
 });
 
 // --- Spelbrädet ---
+// Placeringsfas: klicka en tom ruta för att sätta ut en bricka.
+// Flyttfas (efter 3 utplacerade brickor var): klicka en egen bricka för
+// att välja den, klicka sedan en tom ruta för att flytta dit. Klick på
+// samma bricka igen avmarkerar den.
 for (let i = 0; i < 9; i++) {
     document.getElementById(`cell-${i}`).addEventListener("click", () => {
-        if (!currentCode || !myPlayerId) return;
-        makeMove(currentCode, i, myPlayerId).catch(() => { /* ogiltigt drag, ignorera */ });
+        if (!currentCode || !myPlayerId || !lastRoom?.round) return;
+        const round = lastRoom.round;
+        const me = lastRoom.players?.[myPlayerId];
+        if (!me || round.winner || round.turn !== myPlayerId) return;
+
+        const cellValue = round.board?.[i] || null;
+
+        if (isPlacingPhase(round.board, me.symbol)) {
+            if (cellValue) return; // upptagen
+            makeMove(currentCode, { type: "place", cell: i }, myPlayerId).catch(() => {});
+            return;
+        }
+
+        if (cellValue === me.symbol) {
+            selectedCell = selectedCell === i ? null : i;
+            renderGame(lastRoom, myPlayerId, selectedCell);
+            return;
+        }
+        if (!cellValue && selectedCell !== null) {
+            const from = selectedCell;
+            makeMove(currentCode, { type: "move", from, to: i }, myPlayerId).catch(() => {});
+            selectedCell = null;
+        }
     });
 }
 

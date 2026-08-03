@@ -10,8 +10,14 @@ Firebase Realtime Database som backend. Inga byggverktyg krävs.
    4-teckens rumskod (och en delningslänk).
 2. Spelare 2 trycker **Gå med i rum** och matar in koden — eller öppnar
    delningslänken direkt, då fylls koden i automatiskt.
-3. När båda är anslutna startar första ronden. Spelarna turas om att
-   trycka på brädet; draget syncas i realtid till motståndarens telefon.
+3. När båda är anslutna startar första ronden. Varje spelare har bara
+   3 brickor: så länge man har färre än 3 ute placerar man en ny bricka
+   på valfri tom ruta. När alla 3 är utplacerade byter man istället till
+   att FLYTTA en av sina brickor till valfri tom ruta varje tur (tryck
+   på en egen bricka för att välja den, sedan på en tom ruta för att
+   flytta dit) — brädet blir aldrig fullt, så partiet fortsätter tills
+   någon får tre i rad. Varje drag syncas i realtid till motståndarens
+   telefon.
 4. Efter varje runda uppdateras ställningen och en ny runda startar
    automatiskt (den som inte började föregående runda börjar nästa).
 5. När någon når tillräckligt många vinster (t.ex. 2 av 3) visas
@@ -48,7 +54,7 @@ eller Pythons inbyggda server:
     manifest.json         PWA-manifest ("Lägg till på hemskärmen")
     js/
       firebase.js         Firebase-init + generiska, transaktionssäkra DB-helpers
-      game.js              Ren spellogik: vinst-/oavgjort-detektering, drag, rondhantering
+      game.js              Ren spellogik: placerings-/flyttfas, vinstdetektering, rondhantering
       rooms.js             Rum: skapa/gå med, spelaridentitet, drag- och rond-/matchövergångar
       ui.js                All DOM-rendering
       main.js              Skärmväxling, formulär, händelsebindning, Firebase-lyssnare

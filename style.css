@@ -396,6 +396,11 @@ h2 {
     border-color: var(--accent);
 }
 
+.cell.selected {
+    border-color: #fbbf24;
+    box-shadow: 0 0 0 2px #fbbf24 inset;
+}
+
 .hidden {
     display: none !important;
 }

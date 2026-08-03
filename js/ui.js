@@ -3,7 +3,7 @@
 // Firebase + vem jag är) och uppdaterar DOM:en. Inga Firebase-anrop i den
 // här filen — bara läsning av data och uppdatering av skärmen.
 
-import { boardToCells, winsNeeded } from "./game.js?v=8";
+import { boardToCells, winsNeeded, isPlacingPhase } from "./game.js?v=9";
 
 const screens = {
     home: document.getElementById("screen-home"),
@@ -39,12 +39,15 @@ export function renderLobby(room, code) {
         : "Väntar på motståndare…";
 }
 
-export function renderGame(room, myPlayerId) {
+export function renderGame(room, myPlayerId, selectedCell = null) {
     const me = room.players?.[myPlayerId];
     const oppId = getOpponentId(room, myPlayerId);
     const opp = oppId ? room.players[oppId] : null;
     const round = room.round;
     if (!me || !round) return;
+
+    const myTurn = !round.winner && round.turn === myPlayerId && !!oppId;
+    const placing = isPlacingPhase(round.board, me.symbol);
 
     const meChip = document.getElementById("chip-me");
     const oppChip = document.getElementById("chip-opp");
@@ -70,8 +73,19 @@ export function renderGame(room, myPlayerId) {
         cellEl.classList.toggle("mark-x", cells[i] === "X");
         cellEl.classList.toggle("mark-o", cells[i] === "O");
         cellEl.classList.toggle("win", winSet.has(i));
-        const canPlay = !round.winner && round.turn === myPlayerId && !cells[i] && !!oppId;
-        cellEl.disabled = !canPlay;
+        cellEl.classList.toggle("selected", myTurn && !placing && selectedCell === i);
+
+        let canInteract;
+        if (!myTurn) {
+            canInteract = false;
+        } else if (placing) {
+            canInteract = !cells[i]; // valfri tom ruta
+        } else {
+            // Flyttfas: egna brickor går att välja, tomma rutor bara om
+            // man redan valt en bricka att flytta.
+            canInteract = cells[i] === me.symbol || (!cells[i] && selectedCell !== null);
+        }
+        cellEl.disabled = !canInteract;
     }
 
     const statusEl = document.getElementById("game-status");
@@ -92,8 +106,19 @@ export function renderGame(room, myPlayerId) {
         statusEl.textContent = "Du vann ronden! 🎉";
     } else if (round.winner) {
         statusEl.textContent = "Motståndaren vann ronden.";
-    } else if (oppId) {
-        statusEl.textContent = round.turn === myPlayerId ? "Din tur" : "Motståndarens tur…";
+    } else if (!oppId) {
+        // hanteras redan ovan (väntar på motståndare)
+    } else if (myTurn) {
+        if (placing) {
+            statusEl.textContent = "Din tur — placera en bricka";
+        } else if (selectedCell !== null) {
+            statusEl.textContent = "Flytta till en tom ruta";
+        } else {
+            statusEl.textContent = "Din tur — välj en bricka att flytta";
+        }
+    } else {
+        const oppPlacing = opp && isPlacingPhase(round.board, opp.symbol);
+        statusEl.textContent = oppPlacing ? "Motståndarens tur — placerar…" : "Motståndarens tur — flyttar…";
     }
 }
 

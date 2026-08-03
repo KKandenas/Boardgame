@@ -5,8 +5,8 @@
 // BÅDA spelarnas klienter kan räkna ut och skriva samma resultat utan att
 // krocka (se game.js för varför det är säkert).
 
-import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=8";
-import { createRound, applyMove as applyMoveToRound, winsNeeded } from "./game.js?v=8";
+import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=9";
+import { createRound, applyAction, winsNeeded } from "./game.js?v=9";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // utan I, O, 0, 1 — lätta att förväxla
 const CODE_LENGTH = 4;
@@ -138,15 +138,17 @@ export async function joinRoom(codeInput, name) {
     return { code, playerId: newId, room: updatedRoom };
 }
 
-export async function makeMove(code, cellIndex, playerId) {
+// `action` är { type: "place", cell } eller { type: "move", from, to } —
+// se game.js/applyAction för fasreglerna.
+export async function makeMove(code, action, playerId) {
     const { committed } = await dbTransact(paths.room(code), (current) => {
         if (!current || !current.round) return undefined;
         const players = current.players || {};
         const me = players[playerId];
         if (!me) return undefined;
         const otherId = Object.keys(players).find((id) => id !== playerId);
-        const updatedRound = applyMoveToRound(current.round, cellIndex, playerId, me.symbol, otherId);
-        if (updatedRound === current.round) return undefined; // ogiltigt drag, avbryt tyst
+        const updatedRound = applyAction(current.round, action, playerId, me.symbol, otherId);
+        if (updatedRound === current.round) return undefined; // ogiltig handling, avbryt tyst
         return { ...current, round: updatedRound };
     });
     return committed;
