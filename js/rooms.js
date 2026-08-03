@@ -83,59 +83,59 @@ export async function joinRoom(codeInput, name) {
     const code = normalizeCode(codeInput);
     if (code.length !== CODE_LENGTH) throw new Error("Ange en giltig 4-teckens rumskod.");
 
-    // Bekräftad läsning mot servern FÖRST. Utan den kan Firebase anropa
-    // transaktionens uppdateringsfunktion med ett gissat `null` (klienten
-    // har inte synkat den här sökvägen lokalt än, t.ex. första gången
-    // spelare 2:s enhet någonsin rör vid rummet) — och om vi tolkar det
-    // gissade `null` som "rummet finns inte" avbryts allt utan att någonsin
-    // fråga servern på riktigt. Det gav felaktigt "Rummet hittades inte"
-    // trots att rummet fanns.
-    let existingRoom;
+    // Medveten avvikelse från mönstret i övriga filen: EN bekräftad läsning
+    // + EN vanlig skrivning, INGEN dbTransact. En transaktion på en sökväg
+    // klienten aldrig synkat lokalt (första gången den här spelarens enhet
+    // någonsin rör vid rummet) kan få sin uppdateringsfunktion anropad med
+    // ett GISSAT `null` innan Firebase hunnit fråga servern — och eftersom
+    // vår logik då avbryter permanent (utan att någonsin verifiera mot
+    // servern på riktigt) gav det felaktigt "Rummet hittades inte" trots
+    // att rummet fanns. Samma mönster som redan används i Noir Syndicates
+    // joinRoom (players.js), som aldrig haft det här problemet. Risken vi
+    // accepterar: om två spelare skulle gå med i exakt samma millisekund
+    // kan den sista skrivningen skriva över den första — försumbart för ett
+    // rum med plats för bara två spelare.
+    let room;
     try {
-        existingRoom = await dbGet(paths.room(code));
+        room = await dbGet(paths.room(code));
     } catch (err) {
         // Skiljer ut ett riktigt Firebase-fel (t.ex. behörighet nekad) från
         // "rummet finns inte" — annars ser båda likadana ut för spelaren.
         throw new Error(`Kunde inte läsa rummet (${err.code || err.message || "okänt fel"}).`);
     }
-    if (!existingRoom) throw new Error(`Rummet hittades inte (kod: ${code}). Kontrollera koden.`);
+    if (!room) throw new Error(`Rummet hittades inte (kod: ${code}). Kontrollera koden.`);
 
     const storedId = getStoredPlayerId(code);
     const newId = storedId || generatePlayerId();
+    const players = room.players || {};
 
-    const { committed, value } = await dbTransact(paths.room(code), (current) => {
-        if (current === null) return undefined; // rummet försvann under tiden, avbryt
-        const players = current.players || {};
-
-        if (players[newId]) {
-            // Spelaren är redan med (t.ex. sidan laddades om) — markera bara ansluten.
-            return { ...current, players: { ...players, [newId]: { ...players[newId], connected: true } } };
-        }
-
-        const ids = Object.keys(players);
-        if (ids.length >= 2) return undefined; // rummet är fullt, avbryt
-
-        const symbol = ids.length === 0 ? "X" : (players[ids[0]].symbol === "X" ? "O" : "X");
-        const updatedPlayers = {
-            ...players,
-            [newId]: { symbol, name: name || defaultName(symbol), connected: true, joinedAt: Date.now() },
-        };
-        const updatedScore = { ...(current.score || {}), [newId]: 0 };
-        let next = { ...current, players: updatedPlayers, score: updatedScore };
-
-        if (Object.keys(updatedPlayers).length === 2 && current.status === "waiting") {
-            next = { ...next, status: "playing", round: createRound(1, current.hostId) };
-        }
-        return next;
-    });
-
-    if (!committed) {
-        throw new Error(value ? "Rummet är redan fullt." : "Rummet hittades inte. Kontrollera koden.");
+    if (players[newId]) {
+        // Spelaren är redan med (t.ex. sidan laddades om) — markera bara ansluten.
+        await dbSet(paths.player(code, newId), { ...players[newId], connected: true });
+        storePlayerId(code, newId);
+        registerPresence(code, newId);
+        return { code, playerId: newId, room };
     }
 
+    const ids = Object.keys(players);
+    if (ids.length >= 2) throw new Error("Rummet är redan fullt.");
+
+    const symbol = ids.length === 0 ? "X" : (players[ids[0]].symbol === "X" ? "O" : "X");
+    const updatedPlayers = {
+        ...players,
+        [newId]: { symbol, name: name || defaultName(symbol), connected: true, joinedAt: Date.now() },
+    };
+    const updatedScore = { ...(room.score || {}), [newId]: 0 };
+    let updatedRoom = { ...room, players: updatedPlayers, score: updatedScore };
+
+    if (Object.keys(updatedPlayers).length === 2 && room.status === "waiting") {
+        updatedRoom = { ...updatedRoom, status: "playing", round: createRound(1, room.hostId) };
+    }
+
+    await dbSet(paths.room(code), updatedRoom);
     storePlayerId(code, newId);
     registerPresence(code, newId);
-    return { code, playerId: newId, room: value };
+    return { code, playerId: newId, room: updatedRoom };
 }
 
 export async function makeMove(code, cellIndex, playerId) {
