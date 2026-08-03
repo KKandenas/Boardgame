@@ -44,12 +44,17 @@ nedan.
    mellan alla rum) och används både som visningsnamn och som identitet
    i statistiken. Sparas i `localStorage` så man slipper välja om den
    vid varje besök — "byt profil" på hemskärmen för att välja en annan.
-2. Spelare 1 trycker **Skapa rum**, väljer spel, och får en
-   4-teckens rumskod (och en delningslänk). Inget "bäst av"-val längre
-   — se punkt 4.
-3. Spelare 2 trycker **Gå med i rum** och matar in koden — eller öppnar
-   delningslänken direkt, då fylls koden i automatiskt (och profilval
-   sker först om ingen profil valts tidigare på den enheten).
+2. Spelare 1 väljer direkt ett spel på hemskärmen — inget "skapa
+   rum"-mellansteg, inget "bäst av"-val. Rummet skapas direkt och man
+   hamnar i en väntelobby med rumskoden synlig.
+3. Spelare 2 ser DIREKT på sin egen hemskärm att t.ex. "Kristian
+   startade Luffarschack", i en live-uppdaterad lista över öppna spel —
+   och kan trycka **Gå med** där. Fungerar även utan att ha fått någon
+   länk, så länge båda är på samma app samtidigt. Att skicka en inbjudan
+   går fortfarande bra (dela-knappen i lobbyn) — mottagaren behöver bara
+   öppna appens startsida, ingen kod krävs (fast en delad länk kan även
+   förifylla koden i reservformuläret "Har du en rumskod?", ifall
+   spelet av någon anledning inte hunnit synas i listan än).
 4. När båda är anslutna startar första ronden med det valda spelets
    regler. Varje drag syncas i realtid till motståndarens telefon.
    Rondar spelas kontinuerligt utan något matchmål: när en rond får en
@@ -101,15 +106,16 @@ eller Pythons inbyggda server:
 
 ## Filstruktur
 
-    index.html          Markup för samtliga skärmar (profil/hem/skapa/gå med/lobby/spel/statistik)
+    index.html          Markup för samtliga skärmar (profil/hem/lobby/spel/statistik)
     style.css            All styling, mobilanpassad (touch-vänlig, safe-area)
     manifest.json         PWA-manifest ("Lägg till på hemskärmen")
     js/
       firebase.js         Firebase-init + generiska, transaktionssäkra DB-helpers (inkl. dbPush)
       profiles.js          Globala spelarprofiler (skapa/lista/spara i localStorage) + hämta statsLog
-      rooms.js             Rum: skapa/gå med, spelaridentitet, drag- och rondövergångar,
-                            rondslut + ömsesidig "spela igen"-bekräftelse, statistikloggning
-                            — helt agnostisk om VILKET spel som spelas
+      rooms.js             Rum: skapa/gå med, öppna-rum-index (hemskärmens live-lista),
+                            spelaridentitet, drag- och rondövergångar, rondslut + ömsesidig
+                            "spela igen"-bekräftelse, statistikloggning — helt agnostisk om
+                            VILKET spel som spelas
       stats.js              Ren aggregeringslogik för statistik/leaderboard (inga DOM-/Firebase-anrop)
       ui.js                All DOM-rendering, bygger brädet dynamiskt utifrån aktivt spel
       main.js              Skärmväxling, formulär, händelsebindning, Firebase-lyssnare
@@ -150,9 +156,10 @@ Sedan väljer spelet EN av två sätt att rendera brädet:
    (`ctx.sendAction`/`ctx.setSelectedCell`). Använd när spelet inte är
    ett enkelt rutnät (annan form, extra kontroller som tärningar/kub).
 
-Lägg sedan till modulen i `js/games/registry.js` och en radioknapp i
-`index.html` (fieldset "Spel" i #screen-create). Resten av appen
-(rum, matchning, poängräkning) är redan generiskt.
+Lägg sedan till modulen i `js/games/registry.js` och en knapp i
+`index.html` (`#start-game-picker` på hemskärmen, `data-game-id`
+matchar `meta.id`). Resten av appen (rum, matchning, poängräkning) är
+redan generiskt.
 
 ## Teknik i korthet
 
@@ -160,8 +167,11 @@ Lägg sedan till modulen i `js/games/registry.js` och en radioknapp i
   (samma klientkonfiguration — den är inte hemlig, säkerheten sitter i
   Realtime Database-reglerna). All data för det här spelet ligger
   isolerat under toppnoden `luffarschack/` i databasen: `rooms/` (rum),
-  `profiles/` (spelarprofiler) och `statsLog/` (append-only-logg över
-  avslutade ronder, en post per `dbPush`).
+  `profiles/` (spelarprofiler), `statsLog/` (append-only-logg över
+  avslutade ronder, en post per `dbPush`) och `openRooms/` (lättviktigt
+  index — bara {gameId, hostName, hostProfileId, createdAt} per rum i
+  väntestatus, det hemskärmens live-lista lyssnar på istället för att
+  behöva läsa/filtrera hela `rooms/`-trädet).
 - Rumskoder och spelutgång (drag, poängräkning, rondövergångar) skrivs
   via Firebase-transaktioner på hela rum-noden. Det gör operationerna
   idempotenta: båda spelarnas klienter kan räkna ut och skriva samma
@@ -196,7 +206,20 @@ Lägg sedan till modulen i `js/games/registry.js` och en radioknapp i
   och spela/logga statistik i dess namn. Fungerar bra bland betrodda
   spelare, men lita inte på leaderboarden som bevis mot någon som vill
   fuska.
-- Gamla/övergivna rum städas inte bort ur databasen. Detsamma gäller
-  `statsLog` — den växer obegränsat (litet dataset för en hobbyapp, men
-  inget automatiskt städas bort).
+- Öppna rum är **globalt synliga för alla profiler** — precis som
+  leaderboarden är detta ett medvetet val (ingen "vänner"-koppling
+  finns), men det betyder att vem som helst med appen öppen kan se och
+  gå med i vilket väntande rum som helst, inte bara de man själv blivit
+  inbjuden till.
+- Rum som blir övergivna UTAN att värden trycker "Avbryt" (t.ex. stängd
+  flik/app) städas inte bort — varken själva rummet eller dess post i
+  `openRooms/`, så de kan fortsätta synas som "väntar" i listan trots
+  att ingen längre är där. `statsLog` växer också obegränsat (litet
+  dataset för en hobbyapp, men inget städas bort automatiskt).
+- Att gå med i ett rum är EN läsning + EN skrivning, ingen transaktion
+  (se kommentaren i `rooms.js` joinRoom) — om två spelare skulle trycka
+  "Gå med" på exakt samma rum i exakt samma millisekund kan den sista
+  skrivningen skriva över den första. Mer sannolikt nu än tidigare
+  eftersom öppna rum är synliga för fler samtidigt, men fortfarande ett
+  medvetet accepterat, försumbart edge-case för en hobbyapp.
 - Ingen chatt eller emote-funktion mellan spelarna ännu.

@@ -181,6 +181,7 @@ h2 {
 }
 
 .radio-chip {
+    appearance: none;
     flex: 1;
     text-align: center;
     background: var(--surface-2);
@@ -188,22 +189,21 @@ h2 {
     border-radius: 10px;
     padding: 12px 0;
     font-weight: 600;
+    font-family: inherit;
+    font-size: 0.95rem;
     color: var(--text-dim);
     cursor: pointer;
-    position: relative;
+    touch-action: manipulation;
+    transition: transform 0.08s ease, opacity 0.15s ease;
 }
 
-.radio-chip input {
-    position: absolute;
-    opacity: 0;
-    inset: 0;
-    cursor: pointer;
+.radio-chip:active {
+    transform: scale(0.97);
 }
 
-.radio-chip:has(input:checked) {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-dim);
+.radio-chip:disabled {
+    opacity: 0.5;
+    cursor: default;
 }
 
 .error-text {
@@ -858,6 +858,64 @@ h2 {
     font-weight: 600;
     cursor: pointer;
     text-decoration: underline;
+}
+
+/* --- Hemskärm: öppna spel + direkt spelstart --- */
+.section-label {
+    text-align: left;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin: 22px 0 10px;
+}
+
+.open-rooms-section .section-label {
+    margin-top: 0;
+}
+
+.open-rooms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.open-room-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.open-room-join-btn {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+}
+
+.join-code-toggle {
+    display: block;
+    margin: 18px 0 0;
+    text-align: center;
+    width: 100%;
+}
+
+.join-code-form {
+    margin-top: 14px;
+    text-align: left;
+}
+
+.join-code-form .btn {
+    width: 100%;
+}
+
+.home-stats-btn {
+    width: 100%;
+    margin-top: 20px;
 }
 
 /* --- Statistik/leaderboard --- */

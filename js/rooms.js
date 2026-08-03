@@ -12,8 +12,8 @@
 // innan en ny rond startar (round.readyForNext) — se finishRound/
 // markReadyForNext nedan.
 
-import { paths, dbGet, dbSet, dbTransact, dbListen, dbPush, registerPresence } from "./firebase.js?v=18";
-import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=18";
+import { paths, dbGet, dbSet, dbRemove, dbTransact, dbListen, dbPush, registerPresence } from "./firebase.js?v=19";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=19";
 
 // Spel kan lägga till egna initiala fält på runde-nivå (t.ex. backgammons
 // dubbleringstärning) via en valfri game.initialRoundState()-hook.
@@ -83,8 +83,9 @@ async function claimUniqueCode() {
 export async function createRoom(gameId, profile) {
     const code = await claimUniqueCode();
     const playerId = generatePlayerId();
+    const resolvedGameId = gameId || DEFAULT_GAME_ID;
     const room = {
-        gameId: gameId || DEFAULT_GAME_ID,
+        gameId: resolvedGameId,
         hostId: playerId,
         createdAt: Date.now(),
         status: "waiting",
@@ -95,6 +96,11 @@ export async function createRoom(gameId, profile) {
         round: null,
     };
     await dbSet(paths.room(code), room);
+    // Synlig i den öppna listan på hemskärmen tills någon går med (eller
+    // värden avbryter) — se listenToOpenRooms/cancelWaitingRoom.
+    await dbSet(paths.openRoom(code), {
+        gameId: resolvedGameId, hostName: profile.name, hostProfileId: profile.id, createdAt: Date.now(),
+    });
     storePlayerId(code, playerId);
     registerPresence(code, playerId);
     return { code, playerId, room };
@@ -149,14 +155,40 @@ export async function joinRoom(codeInput, profile) {
     const updatedScore = { ...(room.score || {}), [newId]: 0 };
     let updatedRoom = { ...room, players: updatedPlayers, score: updatedScore };
 
-    if (Object.keys(updatedPlayers).length === 2 && room.status === "waiting") {
+    const becameFull = Object.keys(updatedPlayers).length === 2 && room.status === "waiting";
+    if (becameFull) {
         updatedRoom = { ...updatedRoom, status: "playing", round: createRound(room.gameId, 1, room.hostId) };
     }
 
     await dbSet(paths.room(code), updatedRoom);
+    // Rummet är inte längre öppet att gå med i — ta bort det ur den
+    // synliga listan på hemskärmen (bara relevant vid FÖRSTA gången
+    // rummet blir fullt, inte vid en ombladdning där man redan var med).
+    if (becameFull) await dbRemove(paths.openRoom(code)).catch(() => {});
     storePlayerId(code, newId);
     registerPresence(code, newId);
     return { code, playerId: newId, room: updatedRoom };
+}
+
+// Öppna rum synliga på hemskärmen — en spelare kan trycka "Gå med"
+// direkt istället för att skriva in en kod. Lyssnaren uppdateras live så
+// nya/borttagna rum syns direkt hos alla som just då är på hemskärmen.
+export function listenToOpenRooms(callback) {
+    return dbListen(paths.openRooms(), callback);
+}
+
+// Anropas när värden trycker "Avbryt" i lobbyn INNAN någon gått med.
+// Tar bort hela rummet (inget att spara — ingen rond har startat) samt
+// dess post i den öppna listan. Skyddat av en transaktion: om en
+// motståndare hann gå med i exakt samma ögonblick avbryts operationen
+// tyst istället för att förstöra ett parti som precis startade.
+export async function cancelWaitingRoom(code) {
+    const { committed } = await dbTransact(paths.room(code), (current) => {
+        if (!current || current.status !== "waiting") return undefined;
+        return null; // tar bort hela rum-noden
+    });
+    if (committed) await dbRemove(paths.openRoom(code)).catch(() => {});
+    return committed;
 }
 
 // `action`s form beror på spelet (se respektive js/games/*.js) — t.ex.

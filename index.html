@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" href="assets/icon.svg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="style.css?v=18">
+    <link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
     <div id="app">
@@ -37,51 +37,33 @@
                 <h1>Bordsspel</h1>
                 <p class="subtitle">Brädspel mot en kompis — varsin mobil, i realtid.</p>
                 <p class="profile-chip">Spelar som <strong id="home-profile-name">–</strong> · <button type="button" id="btn-switch-profile" class="link-btn">byt profil</button></p>
-                <div class="button-stack">
-                    <button id="btn-show-create" class="btn btn-primary">Skapa rum</button>
-                    <button id="btn-show-join" class="btn btn-secondary">Gå med i rum</button>
-                    <button id="btn-show-stats" class="btn btn-ghost">Statistik</button>
+
+                <div id="open-rooms-section" class="open-rooms-section hidden">
+                    <p class="section-label">Öppna spel</p>
+                    <div id="open-rooms-list" class="open-rooms-list"></div>
                 </div>
-            </div>
-        </section>
 
-        <section class="screen" id="screen-create">
-            <div class="card">
-                <h2>Skapa rum</h2>
-                <form id="form-create">
-                    <fieldset class="field">
-                        <legend>Spel</legend>
-                        <div class="radio-row">
-                            <label class="radio-chip"><input type="radio" name="gameId" value="tictactoe" checked> Luffarschack</label>
-                            <label class="radio-chip"><input type="radio" name="gameId" value="othello"> Othello</label>
-                            <label class="radio-chip"><input type="radio" name="gameId" value="backgammon"> Backgammon</label>
-                            <label class="radio-chip"><input type="radio" name="gameId" value="battleship"> Sänka skepp</label>
-                        </div>
-                    </fieldset>
-                    <p class="error-text" id="create-error"></p>
-                    <div class="button-stack">
-                        <button type="submit" class="btn btn-primary">Skapa rum</button>
-                        <button type="button" id="btn-create-back" class="btn btn-ghost">Tillbaka</button>
-                    </div>
-                </form>
-            </div>
-        </section>
+                <p class="section-label">Starta ett spel</p>
+                <div class="radio-row" id="start-game-picker">
+                    <button type="button" class="radio-chip" data-game-id="tictactoe">Luffarschack</button>
+                    <button type="button" class="radio-chip" data-game-id="othello">Othello</button>
+                    <button type="button" class="radio-chip" data-game-id="backgammon">Backgammon</button>
+                    <button type="button" class="radio-chip" data-game-id="battleship">Sänka skepp</button>
+                </div>
+                <p class="error-text" id="home-error"></p>
 
-        <section class="screen" id="screen-join">
-            <div class="card">
-                <h2>Gå med i rum</h2>
-                <form id="form-join">
+                <button type="button" id="btn-toggle-join-code" class="link-btn join-code-toggle">Har du en rumskod?</button>
+                <form id="form-join" class="join-code-form hidden">
                     <label class="field">
                         <span>Rumskod</span>
                         <input id="join-code" type="text" maxlength="4" placeholder="ABCD" autocomplete="off"
                                autocapitalize="characters" class="code-input" inputmode="text">
                     </label>
                     <p class="error-text" id="join-error"></p>
-                    <div class="button-stack">
-                        <button type="submit" class="btn btn-primary">Gå med</button>
-                        <button type="button" id="btn-join-back" class="btn btn-ghost">Tillbaka</button>
-                    </div>
+                    <button type="submit" class="btn btn-secondary">Gå med</button>
                 </form>
+
+                <button id="btn-show-stats" class="btn btn-ghost home-stats-btn">Statistik</button>
             </div>
         </section>
 
@@ -167,6 +149,6 @@
 
     <div id="app-version" class="app-version"></div>
 
-    <script type="module" src="js/main.js?v=18"></script>
+    <script type="module" src="js/main.js?v=19"></script>
 </body>
 </html>

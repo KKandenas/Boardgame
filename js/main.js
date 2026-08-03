@@ -4,17 +4,18 @@
 
 import {
     createRoom, joinRoom, makeMove, finishRound, markReadyForNext,
+    cancelWaitingRoom, listenToOpenRooms,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=18";
+} from "./rooms.js?v=19";
 import {
     showScreen, renderLobby, renderGame, setError,
-    renderProfileList, setCurrentProfileLabel, populateStatsFilters, renderStatsResults,
-} from "./ui.js?v=18";
-import { getGame } from "./games/registry.js?v=18";
+    renderProfileList, setCurrentProfileLabel, populateStatsFilters, renderStatsResults, renderOpenRooms,
+} from "./ui.js?v=19";
+import { getGame } from "./games/registry.js?v=19";
 import {
     listProfiles, getOrCreateProfileByName, getStoredProfile, storeProfile, clearStoredProfile, fetchStatsLog,
-} from "./profiles.js?v=18";
-import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=18";
+} from "./profiles.js?v=19";
+import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=19";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
@@ -23,13 +24,14 @@ import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=1
 // i index.html, annars riskerar olika filer att cachas separat och hamna
 // i otakt — vilket var precis orsaken till att "rummet hittades inte"
 // kvarstod trots att fixen redan var pushad.
-export const APP_VERSION = "build 18 · 2026-08-03";
+export const APP_VERSION = "build 19 · 2026-08-04";
 
 let currentCode = null;
 let myPlayerId = null;
 let myProfile = null;
 let pendingJoinCode = null; // ?code=-länk som väntar på att en profil väljs
 let unsubscribe = null;
+let latestOpenRooms = [];
 
 // Vilken rond (roundNumber) den här klienten redan försökt avsluta
 // (finishRound) — förhindrar att varje ny rendering av samma avslutade
@@ -129,14 +131,16 @@ function onProfilePicked(profile) {
     storeProfile(profile);
     setCurrentProfileLabel(profile.name);
     setError("profile", "");
+    showScreen("home");
     if (pendingJoinCode) {
         const code = pendingJoinCode;
         pendingJoinCode = null;
         document.getElementById("join-code").value = code;
-        showScreen("join");
-    } else {
-        showScreen("home");
+        document.getElementById("form-join").classList.remove("hidden");
     }
+    // Uppdatera listan direkt så mitt eget ev. öppna rum (om jag bytte
+    // TILL en profil som råkar vara värd för ett) inte visas för mig själv.
+    renderOpenRooms(latestOpenRooms, myProfile.id, onJoinOpenRoom);
 }
 
 document.getElementById("form-profile-new").addEventListener("submit", async (e) => {
@@ -164,48 +168,45 @@ document.getElementById("btn-switch-profile").addEventListener("click", () => {
     refreshProfileList();
 });
 
-// --- Startskärm ---
-document.getElementById("btn-show-create").addEventListener("click", () => {
-    setError("create", "");
-    showScreen("create");
-});
-document.getElementById("btn-show-join").addEventListener("click", () => {
-    setError("join", "");
-    showScreen("join");
-});
-document.getElementById("btn-create-back").addEventListener("click", () => showScreen("home"));
-document.getElementById("btn-join-back").addEventListener("click", () => showScreen("home"));
+// --- Öppna spel på hemskärmen ---
+function subscribeOpenRooms() {
+    listenToOpenRooms((raw) => {
+        latestOpenRooms = raw
+            ? Object.entries(raw).map(([code, r]) => ({ code, ...r })).sort((a, b) => b.createdAt - a.createdAt)
+            : [];
+        renderOpenRooms(latestOpenRooms, myProfile?.id, onJoinOpenRoom);
+    });
+}
 
-// --- Skapa rum ---
-document.getElementById("form-create").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    setError("create", "");
-    const gameId = document.querySelector('input[name="gameId"]:checked').value;
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    try {
-        const { code, playerId } = await createRoom(gameId, myProfile);
-        currentCode = code;
-        myPlayerId = playerId;
-        subscribe(code);
-        showScreen("lobby");
-        setupLobbyLinks(code);
-    } catch (err) {
-        setError("create", err.message || "Kunde inte skapa rummet. Försök igen.");
-    } finally {
-        submitBtn.disabled = false;
-    }
+async function onJoinOpenRoom(code) {
+    await performJoin(code);
+}
+
+// --- Starta ett spel direkt (inget "skapa rum"-mellansteg) ---
+document.querySelectorAll('#start-game-picker button[data-game-id]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+        setError("home", "");
+        btn.disabled = true;
+        try {
+            const { code, playerId } = await createRoom(btn.dataset.gameId, myProfile);
+            currentCode = code;
+            myPlayerId = playerId;
+            subscribe(code);
+            showScreen("lobby");
+            setupLobbyLinks(code);
+        } catch (err) {
+            setError("home", err.message || "Kunde inte skapa rummet. Försök igen.");
+        } finally {
+            btn.disabled = false;
+        }
+    });
 });
 
-// --- Gå med i rum ---
-document.getElementById("form-join").addEventListener("submit", async (e) => {
-    e.preventDefault();
+// --- Gå med i rum (reserv: manuell kod, eller klick i öppna-listan) ---
+async function performJoin(codeInput) {
     setError("join", "");
-    const code = document.getElementById("join-code").value;
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
     try {
-        const result = await joinRoom(code, myProfile);
+        const result = await joinRoom(codeInput, myProfile);
         currentCode = result.code;
         myPlayerId = result.playerId;
         subscribe(result.code);
@@ -213,9 +214,20 @@ document.getElementById("form-join").addEventListener("submit", async (e) => {
         setupLobbyLinks(result.code);
     } catch (err) {
         setError("join", err.message || "Kunde inte gå med i rummet.");
-    } finally {
-        submitBtn.disabled = false;
     }
+}
+
+document.getElementById("btn-toggle-join-code").addEventListener("click", () => {
+    document.getElementById("form-join").classList.toggle("hidden");
+});
+
+document.getElementById("form-join").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = document.getElementById("join-code").value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    await performJoin(code);
+    submitBtn.disabled = false;
 });
 
 document.getElementById("join-code").addEventListener("input", (e) => {
@@ -248,8 +260,13 @@ function setupLobbyLinks(code) {
 }
 
 document.getElementById("btn-lobby-cancel").addEventListener("click", () => {
+    const code = currentCode;
     leaveRoomState();
     showScreen("home");
+    // Tar bort rummet + dess post i öppna-listan (fire-and-forget: om en
+    // motståndare hann gå med i exakt samma ögonblick avbryts detta tyst
+    // av transaktionen i cancelWaitingRoom, ingen skada skedd).
+    if (code) cancelWaitingRoom(code).catch(() => {});
 });
 
 // --- Spelbrädet ---
@@ -352,7 +369,9 @@ document.getElementById("stats-timeframe").addEventListener("change", renderStat
 document.getElementById("stats-opponent").addEventListener("change", renderStatsView);
 
 // --- Start: läs ev. ?code= i länken, hoppa till profilval om ingen
-// profil är vald ännu, annars rakt till gå-med/hem ---
+// profil är vald ännu, annars rakt till hemskärmen (nu med den öppna
+// listan) — en delad länk räcker att öppna för att se värdens spel i
+// listan, ?code= behövs bara för att förifylla kod-reservformuläret ---
 (async function init() {
     document.getElementById("app-version").textContent = APP_VERSION;
     const params = new URLSearchParams(location.search);
@@ -362,16 +381,15 @@ document.getElementById("stats-opponent").addEventListener("change", renderStats
     if (stored) {
         myProfile = stored;
         setCurrentProfileLabel(stored.name);
+        showScreen("home");
         if (codeFromLink) {
             document.getElementById("join-code").value = codeFromLink;
-            showScreen("join");
-        } else {
-            showScreen("home");
+            document.getElementById("form-join").classList.remove("hidden");
         }
-        return;
+    } else {
+        pendingJoinCode = codeFromLink || null;
+        showScreen("profile");
+        refreshProfileList();
     }
-
-    pendingJoinCode = codeFromLink || null;
-    showScreen("profile");
-    refreshProfileList();
+    subscribeOpenRooms();
 })();

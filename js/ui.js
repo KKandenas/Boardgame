@@ -4,14 +4,12 @@
 // här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
 // från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells } from "./games/shared.js?v=18";
-import { getGame, GAME_LIST } from "./games/registry.js?v=18";
+import { boardToCells } from "./games/shared.js?v=19";
+import { getGame, GAME_LIST } from "./games/registry.js?v=19";
 
 const screens = {
     profile: document.getElementById("screen-profile"),
     home: document.getElementById("screen-home"),
-    create: document.getElementById("screen-create"),
-    join: document.getElementById("screen-join"),
     lobby: document.getElementById("screen-lobby"),
     game: document.getElementById("screen-game"),
     stats: document.getElementById("screen-stats"),
@@ -199,6 +197,42 @@ export function renderProfileList(container, profiles, onSelect) {
 
 export function setCurrentProfileLabel(name) {
     document.getElementById("home-profile-name").textContent = name;
+}
+
+// --- Öppna rum på hemskärmen ---
+// `rooms` är en array [{code, gameId, hostName, hostProfileId, createdAt}, ...],
+// redan sorterad (senaste först) och rensad från nulls av anroparen.
+// Rummet man själv är värd för visas inte i listan — man är redan i sin
+// egen lobby och behöver inte gå med i sitt eget rum.
+export function renderOpenRooms(rooms, myProfileId, onJoin) {
+    const section = document.getElementById("open-rooms-section");
+    const list = document.getElementById("open-rooms-list");
+    const visible = rooms.filter((r) => r.hostProfileId !== myProfileId);
+
+    if (visible.length === 0) {
+        section.classList.add("hidden");
+        list.innerHTML = "";
+        return;
+    }
+    section.classList.remove("hidden");
+    list.innerHTML = "";
+    for (const room of visible) {
+        const game = getGame(room.gameId);
+        const row = document.createElement("div");
+        row.className = "open-room-row";
+
+        const label = document.createElement("span");
+        label.textContent = `${room.hostName} startade ${game.meta.label}`;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-secondary open-room-join-btn";
+        btn.textContent = "Gå med";
+        btn.addEventListener("click", () => onJoin(room.code));
+
+        row.append(label, btn);
+        list.appendChild(row);
+    }
 }
 
 // --- Statistik/leaderboard ---

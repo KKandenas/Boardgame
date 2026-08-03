@@ -36,6 +36,8 @@ export const paths = {
     profiles: () => `luffarschack/profiles`,
     profile: (id) => `luffarschack/profiles/${id}`,
     statsLog: () => `luffarschack/statsLog`,
+    openRooms: () => `luffarschack/openRooms`,
+    openRoom: (code) => `luffarschack/openRooms/${code}`,
 };
 
 // --- Generiska wrappers ---
