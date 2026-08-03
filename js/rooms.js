@@ -83,11 +83,21 @@ export async function joinRoom(codeInput, name) {
     const code = normalizeCode(codeInput);
     if (code.length !== CODE_LENGTH) throw new Error("Ange en giltig 4-teckens rumskod.");
 
+    // Bekräftad läsning mot servern FÖRST. Utan den kan Firebase anropa
+    // transaktionens uppdateringsfunktion med ett gissat `null` (klienten
+    // har inte synkat den här sökvägen lokalt än, t.ex. första gången
+    // spelare 2:s enhet någonsin rör vid rummet) — och om vi tolkar det
+    // gissade `null` som "rummet finns inte" avbryts allt utan att någonsin
+    // fråga servern på riktigt. Det gav felaktigt "Rummet hittades inte"
+    // trots att rummet fanns.
+    const existingRoom = await dbGet(paths.room(code));
+    if (!existingRoom) throw new Error("Rummet hittades inte. Kontrollera koden.");
+
     const storedId = getStoredPlayerId(code);
     const newId = storedId || generatePlayerId();
 
     const { committed, value } = await dbTransact(paths.room(code), (current) => {
-        if (current === null) return undefined; // rummet finns inte, avbryt
+        if (current === null) return undefined; // rummet försvann under tiden, avbryt
         const players = current.players || {};
 
         if (players[newId]) {
