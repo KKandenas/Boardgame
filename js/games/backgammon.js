@@ -19,7 +19,7 @@
 // (bar, slå ut, hem-bärning exakt/övertal, dubbleringstärning,
 // gammon/backgammon) följer de riktiga reglerna.
 
-import { otherSymbolOf } from "./shared.js?v=14";
+import { otherSymbolOf } from "./shared.js?v=15";
 
 export const meta = {
     id: "backgammon",
@@ -388,13 +388,17 @@ export function renderBoard(container, ctx) {
             return;
         }
         if (pointRef === selectedCell) { setSelectedCell(null); return; }
-        if (pointRef !== "bar" && pointRef !== "off" && board.points[pointRef]?.symbol === mySymbol) {
-            setSelectedCell(pointRef);
-            return;
-        }
+        // En markerad destination vinner ALLTID över "byt vald bricka" —
+        // annars gick det aldrig att stapla en egen bricka på en punkt man
+        // redan har brickor på (fullt lagligt i backgammon), eftersom ett
+        // klick där tolkades som "välj den här brickan istället".
         if (hintSet.has(pointRef)) {
             sendAction({ type: "move", from: selectedCell, to: pointRef });
             setSelectedCell(null);
+            return;
+        }
+        if (pointRef !== "bar" && pointRef !== "off" && board.points[pointRef]?.symbol === mySymbol) {
+            setSelectedCell(pointRef);
         }
     }
 

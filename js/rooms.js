@@ -6,9 +6,9 @@
 // krocka. Helt agnostisk om VILKET spel som spelas — det avgörs av
 // registret i js/games/registry.js (room.gameType pekar ut modulen).
 
-import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=14";
-import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=14";
-import { winsNeeded } from "./games/shared.js?v=14";
+import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=15";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=15";
+import { winsNeeded } from "./games/shared.js?v=15";
 
 // Spel kan lägga till egna initiala fält på runde-nivå (t.ex. backgammons
 // dubbleringstärning) via en valfri game.initialRoundState()-hook.
