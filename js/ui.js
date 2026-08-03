@@ -4,8 +4,8 @@
 // här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
 // från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells, winsNeeded } from "./games/shared.js?v=16";
-import { getGame } from "./games/registry.js?v=16";
+import { boardToCells, winsNeeded } from "./games/shared.js?v=17";
+import { getGame } from "./games/registry.js?v=17";
 
 const screens = {
     home: document.getElementById("screen-home"),

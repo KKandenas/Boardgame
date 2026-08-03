@@ -11,7 +11,7 @@
 // Ren spellogik (inga sidoeffekter, inget DOM/Firebase) + renderBoard
 // (eget bräde — två hav, inte det generiska rutnätet).
 
-import { otherSymbolOf } from "./shared.js?v=16";
+import { otherSymbolOf } from "./shared.js?v=17";
 
 export const meta = {
     id: "battleship",
@@ -91,18 +91,35 @@ function shipsWithHits(ships) {
     return ships.map((s, i) => ({ id: i, cells: s.cells.slice(), hits: s.cells.map(() => false) }));
 }
 
+// Riktiga Firebase Realtime Database lagrar ALDRIG ett tomt objekt heller
+// — precis som en explicit `null` tas noden bort helt, och det kaskaderar:
+// `{ships: null}` blir `{}` när `ships` strippas, och det TOMMA objektet
+// försvinner i sin tur. Så `round.board.fleets`/`round.board.shots` (och
+// till och med `round.board` självt, innan någon flotta placerats) kan bli
+// `undefined` efter en tur-och-retur genom databasen, trots att de aldrig
+// explicit sattes till null. Samma bugklass som tidigare bet i backgammon —
+// därför läses ALLT härifrån via valfri kedjning (`?.`) med falsy-fallback,
+// aldrig direkt indexering.
+function fleetOf(board, symbol) {
+    return board?.fleets?.[symbol] || null;
+}
+
+function shotsOf(board, symbol) {
+    return board?.shots?.[symbol] || {};
+}
+
 export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
     if (!round || round.winner) return round;
     if (!action) return round;
 
     if (action.type === "place-fleet") {
         if (round.phase !== "placing") return round;
-        if (round.board.fleets[mySymbol].ships) return round; // redan inskickad
+        if (fleetOf(round.board, mySymbol)?.ships) return round; // redan inskickad
         if (!validateFleet(action.ships)) return round;
 
-        const fleets = { ...round.board.fleets, [mySymbol]: { ships: shipsWithHits(action.ships) } };
+        const fleets = { ...round.board?.fleets, [mySymbol]: { ships: shipsWithHits(action.ships) } };
         const board = { ...round.board, fleets };
-        const bothReady = !!(fleets.X.ships && fleets.O.ships);
+        const bothReady = !!(fleets.X?.ships && fleets.O?.ships);
         return { ...round, board, phase: bothReady ? "battle" : "placing" };
     }
 
@@ -110,10 +127,11 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
         if (round.phase !== "battle" || round.turn !== playerId) return round;
         const cell = action.cell;
         if (!Number.isInteger(cell) || cell < 0 || cell >= CELL_COUNT) return round;
-        if (round.board.shots[mySymbol][cell] !== undefined) return round; // redan skjutit hit
+        const myShotsExisting = shotsOf(round.board, mySymbol);
+        if (myShotsExisting[cell] !== undefined) return round; // redan skjutit hit
 
         const otherSymbol = otherSymbolOf(mySymbol);
-        const targetShips = round.board.fleets[otherSymbol].ships;
+        const targetShips = fleetOf(round.board, otherSymbol)?.ships || [];
         let hitShipIndex = -1;
         let hitCellIndex = -1;
         targetShips.forEach((ship, si) => {
@@ -122,7 +140,7 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
         });
         const isHit = hitShipIndex !== -1;
 
-        const shots = { ...round.board.shots, [mySymbol]: { ...round.board.shots[mySymbol], [cell]: isHit ? "hit" : "miss" } };
+        const shots = { ...round.board?.shots, [mySymbol]: { ...myShotsExisting, [cell]: isHit ? "hit" : "miss" } };
         const newShips = isHit
             ? targetShips.map((ship, si) => {
                 if (si !== hitShipIndex) return ship;
@@ -131,7 +149,7 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
                 return { ...ship, hits };
             })
             : targetShips;
-        const fleets = { ...round.board.fleets, [otherSymbol]: { ships: newShips } };
+        const fleets = { ...round.board?.fleets, [otherSymbol]: { ships: newShips } };
         const board = { ...round.board, shots, fleets };
 
         const allSunk = newShips.every((s) => s.hits.every(Boolean));
@@ -146,7 +164,7 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
 
 export function statusText({ round, myTurn, mySymbol }) {
     if (round.phase === "placing") {
-        const mine = round.board.fleets[mySymbol].ships;
+        const mine = fleetOf(round.board, mySymbol)?.ships;
         return mine ? "Väntar på att motståndaren ska placera sin flotta…" : "Placera din flotta";
     }
     return myTurn ? "Din tur — skjut mot motståndarens hav" : "Motståndarens tur…";
@@ -354,10 +372,10 @@ function renderWaitingBoard(container, ships) {
 function renderBattleBoards(container, ctx) {
     const { round, mySymbol, myTurn, sendAction } = ctx;
     const otherSymbol = otherSymbolOf(mySymbol);
-    const myShips = round.board.fleets[mySymbol].ships;
-    const otherShips = round.board.fleets[otherSymbol].ships;
-    const myShots = round.board.shots[mySymbol] || {};
-    const otherShots = round.board.shots[otherSymbol] || {};
+    const myShips = fleetOf(round.board, mySymbol)?.ships || [];
+    const otherShips = fleetOf(round.board, otherSymbol)?.ships || [];
+    const myShots = shotsOf(round.board, mySymbol);
+    const otherShots = shotsOf(round.board, otherSymbol);
 
     const wrap = document.createElement("div");
     wrap.className = "ss-boards";
@@ -419,7 +437,7 @@ export function renderBoard(container, ctx) {
     const { round, mySymbol } = ctx;
     if (draft.roundNumber !== round.roundNumber) resetDraft(round.roundNumber);
 
-    const myShips = round.board.fleets[mySymbol].ships;
+    const myShips = fleetOf(round.board, mySymbol)?.ships;
 
     if (round.phase === "placing" && !myShips) {
         renderPlacementUI(container, ctx);
