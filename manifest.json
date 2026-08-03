@@ -1,7 +1,7 @@
 {
-    "name": "Luffarschack",
-    "short_name": "Luffarschack",
-    "description": "Tre i rad mot en kompis, varsin mobil, i realtid.",
+    "name": "Boardgame",
+    "short_name": "Boardgame",
+    "description": "Boardgame - spela brädspel mot en kompis, varsin mobil, i realtid.",
     "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#0b0c10",
