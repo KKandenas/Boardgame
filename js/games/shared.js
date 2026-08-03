@@ -11,10 +11,6 @@ export function boardToCells(board, cellCount) {
     return cells;
 }
 
-export function winsNeeded(bestOf) {
-    return Math.floor(bestOf / 2) + 1;
-}
-
 export function otherSymbolOf(symbol) {
     return symbol === "X" ? "O" : "X";
 }

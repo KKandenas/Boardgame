@@ -19,13 +19,12 @@
 // (bar, slå ut, hem-bärning exakt/övertal, dubbleringstärning,
 // gammon/backgammon) följer de riktiga reglerna.
 
-import { otherSymbolOf } from "./shared.js?v=17";
+import { otherSymbolOf } from "./shared.js?v=18";
 
 export const meta = {
     id: "backgammon",
     label: "Backgammon",
     description: "Klassiskt tärningsspel med dubbleringstärning och gammon-poäng.",
-    matchFormat: "points",
     boardClass: "board--backgammon",
 };
 

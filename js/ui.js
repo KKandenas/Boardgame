@@ -4,16 +4,17 @@
 // här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
 // från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells, winsNeeded } from "./games/shared.js?v=17";
-import { getGame } from "./games/registry.js?v=17";
+import { boardToCells } from "./games/shared.js?v=18";
+import { getGame, GAME_LIST } from "./games/registry.js?v=18";
 
 const screens = {
+    profile: document.getElementById("screen-profile"),
     home: document.getElementById("screen-home"),
     create: document.getElementById("screen-create"),
     join: document.getElementById("screen-join"),
     lobby: document.getElementById("screen-lobby"),
     game: document.getElementById("screen-game"),
-    "match-over": document.getElementById("screen-match-over"),
+    stats: document.getElementById("screen-stats"),
 };
 
 export function showScreen(name) {
@@ -96,10 +97,7 @@ export function renderGame(room, myPlayerId, selectedCell = null, callbacks = {}
     meChip.classList.toggle("active-turn", !round.winner && round.turn === myPlayerId);
     oppChip.classList.toggle("active-turn", !round.winner && !!oppId && round.turn === oppId);
 
-    const matchFormat = game.meta.matchFormat || "games";
-    document.getElementById("round-indicator").textContent = matchFormat === "points"
-        ? `${game.meta.label} · Runda ${round.roundNumber} · Spel till ${room.bestOf} poäng`
-        : `${game.meta.label} · Runda ${round.roundNumber} · Bäst av ${room.bestOf} (${winsNeeded(room.bestOf)} vinster avgör)`;
+    document.getElementById("round-indicator").textContent = `${game.meta.label} · Runda ${round.roundNumber}`;
 
     if (typeof game.renderBoard === "function") {
         const boardEl = document.getElementById("board");
@@ -145,7 +143,7 @@ export function renderGame(room, myPlayerId, selectedCell = null, callbacks = {}
 
     const pointsSuffix = round.pointValue > 1 ? ` (${round.pointValue} poäng)` : "";
     if (round.winner === "draw") {
-        statusEl.textContent = "Oavgjort! Nästa runda börjar strax…";
+        statusEl.textContent = "Oavgjort!";
     } else if (round.winner === me.symbol) {
         statusEl.textContent = `Du vann ronden!${pointsSuffix} 🎉`;
     } else if (round.winner) {
@@ -157,25 +155,172 @@ export function renderGame(room, myPlayerId, selectedCell = null, callbacks = {}
             round, board: round.board, myTurn, mySymbol: me.symbol, selectedCell,
         });
     }
-}
 
-export function renderMatchOver(room, myPlayerId) {
-    const me = room.players?.[myPlayerId];
-    const oppId = getOpponentId(room, myPlayerId);
-    const opp = oppId ? room.players[oppId] : null;
-    const iWon = room.matchWinner === myPlayerId;
-
-    document.getElementById("match-over-title").textContent = iWon
-        ? "🏆 Du vann matchen!"
-        : `🏆 ${playerLabel(opp, "Motståndaren")} vann matchen`;
-
-    const myScore = room.score?.[myPlayerId] ?? 0;
-    const oppScore = oppId ? (room.score?.[oppId] ?? 0) : 0;
-    document.getElementById("match-over-score").textContent =
-        `${playerLabel(me, "Du")} ${myScore} – ${oppScore} ${playerLabel(opp, "Motståndaren")}`;
+    // Ingen "bäst av N" längre — efter en avslutad rond väntar vi på att
+    // BÅDA spelarna trycker "Spela igen" (round.readyForNext) innan nästa
+    // rond startar (se rooms.js markReadyForNext).
+    const playAgainBtn = document.getElementById("btn-play-again");
+    if (round.winner) {
+        const iAmReady = !!round.readyForNext?.[myPlayerId];
+        playAgainBtn.classList.remove("hidden");
+        playAgainBtn.disabled = iAmReady;
+        playAgainBtn.textContent = iAmReady ? "Väntar på motståndaren…" : "Spela igen";
+    } else {
+        playAgainBtn.classList.add("hidden");
+        playAgainBtn.disabled = false;
+        playAgainBtn.textContent = "Spela igen";
+    }
 }
 
 export function setError(screenName, message) {
     const el = document.getElementById(`${screenName}-error`);
     if (el) el.textContent = message || "";
+}
+
+// --- Profilväljare ---
+export function renderProfileList(container, profiles, onSelect) {
+    container.innerHTML = "";
+    if (profiles.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "status-text";
+        empty.textContent = "Inga profiler ännu — skapa den första nedan.";
+        container.appendChild(empty);
+        return;
+    }
+    for (const profile of profiles) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-secondary profile-btn";
+        btn.textContent = profile.name;
+        btn.addEventListener("click", () => onSelect(profile));
+        container.appendChild(btn);
+    }
+}
+
+export function setCurrentProfileLabel(name) {
+    document.getElementById("home-profile-name").textContent = name;
+}
+
+// --- Statistik/leaderboard ---
+// Fyller spel- och motståndar-väljarna. Anropas en gång när statistik-
+// skärmen öppnas (motståndarlistan beror på vilka profiler som finns just
+// nu, så den byggs om varje gång skärmen visas, inte en gång vid start).
+export function populateStatsFilters(profiles, myProfileId) {
+    const gameSelect = document.getElementById("stats-game");
+    gameSelect.innerHTML = "";
+    const allGamesOpt = document.createElement("option");
+    allGamesOpt.value = "all";
+    allGamesOpt.textContent = "Alla spel";
+    gameSelect.appendChild(allGamesOpt);
+    for (const game of GAME_LIST) {
+        const opt = document.createElement("option");
+        opt.value = game.meta.id;
+        opt.textContent = game.meta.label;
+        gameSelect.appendChild(opt);
+    }
+
+    const oppSelect = document.getElementById("stats-opponent");
+    oppSelect.innerHTML = "";
+    const allOpt = document.createElement("option");
+    allOpt.value = "all";
+    allOpt.textContent = "Alla (topplista)";
+    oppSelect.appendChild(allOpt);
+    for (const profile of profiles) {
+        if (profile.id === myProfileId) continue;
+        const opt = document.createElement("option");
+        opt.value = profile.id;
+        opt.textContent = profile.name;
+        oppSelect.appendChild(opt);
+    }
+}
+
+function formatDate(ts) {
+    return new Date(ts).toLocaleDateString("sv-SE", { year: "numeric", month: "short", day: "numeric" });
+}
+
+// `view` är antingen { mode: "leaderboard", rows } eller
+// { mode: "head2head", headToHead, myName, opponentName, myProfileId }.
+export function renderStatsResults(container, view) {
+    container.innerHTML = "";
+
+    if (view.mode === "leaderboard") {
+        if (view.rows.length === 0) {
+            const empty = document.createElement("p");
+            empty.className = "status-text";
+            empty.textContent = "Ingen statistik för det här filtret ännu.";
+            container.appendChild(empty);
+            return;
+        }
+        view.rows.forEach((row, i) => {
+            const el = document.createElement("div");
+            el.className = "leaderboard-row";
+
+            const rank = document.createElement("span");
+            rank.className = "lb-rank";
+            rank.textContent = String(i + 1);
+
+            const name = document.createElement("span");
+            name.className = "lb-name";
+            name.textContent = row.name;
+
+            const record = document.createElement("span");
+            record.className = "lb-record";
+            record.textContent = `${row.wins}v ${row.losses}f ${row.draws}o · ${row.played} spelade`;
+
+            const rate = document.createElement("span");
+            rate.className = "lb-rate";
+            rate.textContent = `${Math.round(row.winRate * 100)}%`;
+
+            el.append(rank, name, record, rate);
+            container.appendChild(el);
+        });
+        return;
+    }
+
+    const { headToHead, myName, opponentName, myProfileId } = view;
+    const summary = document.createElement("div");
+    summary.className = "h2h-summary";
+
+    const score = document.createElement("div");
+    score.className = "h2h-score";
+    score.textContent = `${headToHead.wins} – ${headToHead.losses}`;
+
+    const label = document.createElement("p");
+    label.className = "status-text";
+    label.textContent = `${myName} mot ${opponentName}` + (headToHead.draws ? ` (${headToHead.draws} oavgjort)` : "");
+
+    summary.append(score, label);
+    container.appendChild(summary);
+
+    if (headToHead.matches.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "status-text";
+        empty.textContent = "Ni har inte mötts inom det här filtret ännu.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const list = document.createElement("div");
+    list.className = "h2h-list";
+    for (const entry of headToHead.matches) {
+        const game = getGame(entry.gameId);
+        const symbols = Object.keys(entry.players || {});
+        const mySym = symbols.find((s) => entry.players[s]?.profileId === myProfileId);
+        const outcome = entry.winnerSymbol === "draw" ? "draw" : (entry.winnerSymbol === mySym ? "win" : "loss");
+        const resultText = { win: "Vinst", loss: "Förlust", draw: "Oavgjort" }[outcome];
+
+        const row = document.createElement("div");
+        row.className = `h2h-match h2h-${outcome}`;
+
+        const gameLabel = document.createElement("span");
+        gameLabel.textContent = game.meta.label;
+        const result = document.createElement("span");
+        result.textContent = resultText;
+        const date = document.createElement("span");
+        date.textContent = formatDate(entry.timestamp);
+
+        row.append(gameLabel, result, date);
+        list.appendChild(row);
+    }
+    container.appendChild(list);
 }

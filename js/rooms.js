@@ -1,14 +1,19 @@
 // rooms.js
-// Rumshantering: skapa/gå med, drag, rond-/matchövergångar och
-// spelaridentitet. All skrivning som avgör spelutgången görs via
-// dbTransact på hela rum-noden — det gör operationerna idempotenta så att
-// BÅDA spelarnas klienter kan räkna ut och skriva samma resultat utan att
-// krocka. Helt agnostisk om VILKET spel som spelas — det avgörs av
-// registret i js/games/registry.js (room.gameType pekar ut modulen).
+// Rumshantering: skapa/gå med, drag, rondövergångar och spelaridentitet.
+// All skrivning som avgör spelutgången görs via dbTransact på hela
+// rum-noden — det gör operationerna idempotenta så att BÅDA spelarnas
+// klienter kan räkna ut och skriva samma resultat utan att krocka. Helt
+// agnostisk om VILKET spel som spelas — det avgörs av registret i
+// js/games/registry.js (room.gameId pekar ut modulen).
+//
+// Ingen "bäst av N"/matchslut längre: rondar spelas kontinuerligt.
+// När en rond får en vinnare loggas den direkt till den globala
+// statistiken (statsLog), och BÅDA spelarna måste trycka "Spela igen"
+// innan en ny rond startar (round.readyForNext) — se finishRound/
+// markReadyForNext nedan.
 
-import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=17";
-import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=17";
-import { winsNeeded } from "./games/shared.js?v=17";
+import { paths, dbGet, dbSet, dbTransact, dbListen, dbPush, registerPresence } from "./firebase.js?v=18";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=18";
 
 // Spel kan lägga till egna initiala fält på runde-nivå (t.ex. backgammons
 // dubbleringstärning) via en valfri game.initialRoundState()-hook.
@@ -24,6 +29,7 @@ function createRound(gameId, roundNumber, startingPlayerId) {
         winLine: null,
         pointValue: 1,
         scored: false,
+        readyForNext: null,
         ...extra,
     };
 }
@@ -41,10 +47,6 @@ function generateCode() {
 
 export function normalizeCode(input) {
     return (input || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, CODE_LENGTH);
-}
-
-function defaultName(symbol) {
-    return symbol === "X" ? "Spelare 1" : "Spelare 2";
 }
 
 function generatePlayerId() {
@@ -78,21 +80,19 @@ async function claimUniqueCode() {
     throw new Error("Kunde inte hitta en ledig rumskod. Försök igen.");
 }
 
-export async function createRoom(gameId, bestOf, name) {
+export async function createRoom(gameId, profile) {
     const code = await claimUniqueCode();
     const playerId = generatePlayerId();
     const room = {
         gameId: gameId || DEFAULT_GAME_ID,
-        bestOf,
         hostId: playerId,
         createdAt: Date.now(),
         status: "waiting",
         players: {
-            [playerId]: { symbol: "X", name: name || defaultName("X"), connected: true, joinedAt: Date.now() },
+            [playerId]: { symbol: "X", profileId: profile.id, name: profile.name, connected: true, joinedAt: Date.now() },
         },
         score: { [playerId]: 0 },
         round: null,
-        matchWinner: null,
     };
     await dbSet(paths.room(code), room);
     storePlayerId(code, playerId);
@@ -100,7 +100,7 @@ export async function createRoom(gameId, bestOf, name) {
     return { code, playerId, room };
 }
 
-export async function joinRoom(codeInput, name) {
+export async function joinRoom(codeInput, profile) {
     const code = normalizeCode(codeInput);
     if (code.length !== CODE_LENGTH) throw new Error("Ange en giltig 4-teckens rumskod.");
 
@@ -144,7 +144,7 @@ export async function joinRoom(codeInput, name) {
     const symbol = ids.length === 0 ? "X" : (players[ids[0]].symbol === "X" ? "O" : "X");
     const updatedPlayers = {
         ...players,
-        [newId]: { symbol, name: name || defaultName(symbol), connected: true, joinedAt: Date.now() },
+        [newId]: { symbol, profileId: profile.id, name: profile.name, connected: true, joinedAt: Date.now() },
     };
     const updatedScore = { ...(room.score || {}), [newId]: 0 };
     let updatedRoom = { ...room, players: updatedPlayers, score: updatedScore };
@@ -176,13 +176,29 @@ export async function makeMove(code, action, playerId) {
     return committed;
 }
 
-// Anropas av BÅDA klienterna när de ser att en runda fått en vinnare.
-// Transaktionen garanterar att bara den första som hinner fram faktiskt
-// räknar poängen / startar nästa runda — den andra klientens försök
-// avbryts tyst eftersom `round.scored` (eller ny rond/matchstatus) redan
-// hunnit ändras.
-export async function resolveRoundEnd(code) {
-    const { committed } = await dbTransact(paths.room(code), (current) => {
+// Bygger en statsLog-post av en färdigscorad rond och pushar den till den
+// globala, append-only statistikloggen — källan som leaderboard-skärmen
+// läser och aggregerar client-side.
+async function logRoundResult(room) {
+    const round = room.round;
+    const playerIds = Object.keys(room.players || {});
+    const entry = { gameId: room.gameId, timestamp: Date.now(), winnerSymbol: round.winner, players: {} };
+    for (const id of playerIds) {
+        const p = room.players[id];
+        entry.players[p.symbol] = { profileId: p.profileId, name: p.name };
+    }
+    await dbPush(paths.statsLog(), entry);
+}
+
+// Anropas av BÅDA klienterna så fort de ser att en runda fått en vinnare
+// (inget "bäst av N" längre — varje avslutad rond räknas och loggas för
+// sig). Transaktionen garanterar att bara den FÖRSTA klienten som hinner
+// fram faktiskt räknar poängen — den andra klientens försök avbryts tyst
+// eftersom `round.scored` redan hunnit bli true. Just den vinnande
+// klienten (committed === true) är därför också den enda som loggar
+// statistikposten, så varje rond loggas exakt en gång.
+export async function finishRound(code) {
+    const { committed, value } = await dbTransact(paths.room(code), (current) => {
         if (!current || !current.round || !current.round.winner) return undefined;
         if (current.round.scored) return undefined;
 
@@ -194,45 +210,30 @@ export async function resolveRoundEnd(code) {
             if (winnerId) score[winnerId] = (score[winnerId] || 0) + (round.pointValue || 1);
         }
 
-        // De flesta spel (luffarschack/Othello) spelas bäst av N ronder —
-        // en majoritet av vinster avgör. Poängbaserade spel (backgammon,
-        // med dubbleringstärning/gammon) spelas istället TILL N poäng.
-        const game = getGame(current.gameId);
-        const target = game.meta.matchFormat === "points" ? current.bestOf : winsNeeded(current.bestOf);
-        const matchWinnerId = playerIds.find((id) => (score[id] || 0) >= target) || null;
+        return { ...current, score, round: { ...round, scored: true } };
+    });
+    if (committed && value) await logRoundResult(value);
+    return committed;
+}
 
-        if (matchWinnerId) {
-            return {
-                ...current,
-                score,
-                round: { ...round, scored: true },
-                status: "finished",
-                matchWinner: matchWinnerId,
-            };
-        }
+// Anropas när EN spelare trycker "Spela igen" efter en avslutad rond.
+// Ny rond startar (via samma transaktion) så fort BÅDA spelarna markerat
+// sig redo — annars sparas bara min egen "redo"-flagga och vi väntar på
+// motståndaren.
+export async function markReadyForNext(code, playerId) {
+    const { committed } = await dbTransact(paths.room(code), (current) => {
+        if (!current || !current.round || !current.round.winner) return undefined;
+        const round = current.round;
+        const playerIds = Object.keys(current.players || {});
+        const readyForNext = { ...(round.readyForNext || {}), [playerId]: true };
+        const allReady = playerIds.length === 2 && playerIds.every((id) => readyForNext[id]);
+
+        if (!allReady) return { ...current, round: { ...round, readyForNext } };
 
         const nextStarter = round.startingPlayer === current.hostId
             ? (playerIds.find((id) => id !== current.hostId) ?? current.hostId)
             : current.hostId;
-
-        return { ...current, score, round: createRound(current.gameId, round.roundNumber + 1, nextStarter) };
-    });
-    return committed;
-}
-
-export async function startRematch(code) {
-    const { committed } = await dbTransact(paths.room(code), (current) => {
-        if (!current) return undefined;
-        const playerIds = Object.keys(current.players || {});
-        const score = {};
-        playerIds.forEach((id) => { score[id] = 0; });
-        return {
-            ...current,
-            score,
-            status: "playing",
-            matchWinner: null,
-            round: createRound(current.gameId, 1, current.hostId),
-        };
+        return { ...current, round: createRound(current.gameId, round.roundNumber + 1, nextStarter) };
     });
     return committed;
 }

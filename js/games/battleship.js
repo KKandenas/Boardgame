@@ -11,13 +11,12 @@
 // Ren spellogik (inga sidoeffekter, inget DOM/Firebase) + renderBoard
 // (eget bräde — två hav, inte det generiska rutnätet).
 
-import { otherSymbolOf } from "./shared.js?v=17";
+import { otherSymbolOf } from "./shared.js?v=18";
 
 export const meta = {
     id: "battleship",
     label: "Sänka skepp",
     description: "Placera din flotta i hemlighet, sänk motståndarens skepp först.",
-    matchFormat: "games",
     boardClass: "board--battleship",
 };
 

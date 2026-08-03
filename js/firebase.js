@@ -9,7 +9,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
     getDatabase, ref, set, get, update, remove, onValue, off,
-    runTransaction, onDisconnect
+    runTransaction, onDisconnect, push
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -33,6 +33,9 @@ export const paths = {
     score: (code) => `luffarschack/rooms/${code}/score`,
     round: (code) => `luffarschack/rooms/${code}/round`,
     status: (code) => `luffarschack/rooms/${code}/status`,
+    profiles: () => `luffarschack/profiles`,
+    profile: (id) => `luffarschack/profiles/${id}`,
+    statsLog: () => `luffarschack/statsLog`,
 };
 
 // --- Generiska wrappers ---
@@ -44,6 +47,16 @@ export async function dbGet(path) {
 }
 
 export async function dbUpdateAt(path, value) { return update(ref(db, path), value); }
+
+// Lägger till EN post under `path` med en Firebase-genererad, kronologiskt
+// sorterbar nyckel — används för append-only-loggen över spelade ronder
+// (statsLog). Ingen transaktion behövs: varje push() är sin egen unika
+// nyckel, så två klienter som pushar samtidigt krockar aldrig.
+export async function dbPush(path, value) {
+    const r = push(ref(db, path));
+    await set(r, value);
+    return r.key;
+}
 
 export async function dbRemove(path) { return remove(ref(db, path)); }
 

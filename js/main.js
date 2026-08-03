@@ -1,28 +1,40 @@
 // main.js
 // Startpunkt: kopplar ihop skärmar, formulär och Firebase-lyssnaren.
-// Håller det lilla state:t appen behöver (vilket rum/spelare jag är).
+// Håller det lilla state:t appen behöver (vilket rum/spelare/profil jag är).
 
 import {
-    createRoom, joinRoom, makeMove, resolveRoundEnd, startRematch,
+    createRoom, joinRoom, makeMove, finishRound, markReadyForNext,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=17";
-import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js?v=17";
-import { getGame } from "./games/registry.js?v=17";
+} from "./rooms.js?v=18";
+import {
+    showScreen, renderLobby, renderGame, setError,
+    renderProfileList, setCurrentProfileLabel, populateStatsFilters, renderStatsResults,
+} from "./ui.js?v=18";
+import { getGame } from "./games/registry.js?v=18";
+import {
+    listProfiles, getOrCreateProfileByName, getStoredProfile, storeProfile, clearStoredProfile, fetchStatsLog,
+} from "./profiles.js?v=18";
+import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=18";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
 // OBS: samma ?v=-suffix måste bumpas på ALLA interna import-satser
-// (main.js, rooms.js, ui.js) och på script/link-taggarna i index.html,
-// annars riskerar olika filer att cachas separat och hamna i otakt —
-// vilket var precis orsaken till att "rummet hittades inte" kvarstod
-// trots att fixen redan var pushad.
-export const APP_VERSION = "build 17 · 2026-08-03";
+// (main.js, rooms.js, ui.js, profiler/stats) och på script/link-taggarna
+// i index.html, annars riskerar olika filer att cachas separat och hamna
+// i otakt — vilket var precis orsaken till att "rummet hittades inte"
+// kvarstod trots att fixen redan var pushad.
+export const APP_VERSION = "build 18 · 2026-08-03";
 
 let currentCode = null;
 let myPlayerId = null;
+let myProfile = null;
+let pendingJoinCode = null; // ?code=-länk som väntar på att en profil väljs
 let unsubscribe = null;
-let scheduledRoundNumber = null;
-let roundEndTimer = null;
+
+// Vilken rond (roundNumber) den här klienten redan försökt avsluta
+// (finishRound) — förhindrar att varje ny rendering av samma avslutade
+// rond spammar en ny transaktion.
+let finishedRoundKey = null;
 
 // Flyttfasens val av "vilken egen bricka ska flyttas" är ren lokal
 // UI-state — motståndaren behöver aldrig se den, bara det färdiga draget.
@@ -45,17 +57,9 @@ function sendAction(action) {
 
 const gameCallbacks = { setSelectedCell, sendAction };
 
-function resetRoundEndTimer() {
-    if (roundEndTimer) {
-        clearTimeout(roundEndTimer);
-        roundEndTimer = null;
-    }
-}
-
 function leaveRoomState() {
     if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-    resetRoundEndTimer();
-    scheduledRoundNumber = null;
+    finishedRoundKey = null;
     lastRoom = null;
     selectedCell = null;
     lastTurnKey = null;
@@ -92,20 +96,14 @@ function onRoomUpdate(room) {
         showScreen("game");
         renderGame(room, myPlayerId, selectedCell, gameCallbacks);
 
-        if (round?.winner && !round.scored && scheduledRoundNumber !== round.roundNumber) {
-            scheduledRoundNumber = round.roundNumber;
-            resetRoundEndTimer();
-            roundEndTimer = setTimeout(() => {
-                resolveRoundEnd(currentCode).catch(() => { /* motparten hann redan lösa det */ });
-            }, 1500);
+        // Ingen "bäst av N"/matchslut längre: så fort en rond får en
+        // vinnare avslutas den direkt (poäng räknas, resultatet loggas
+        // till statistiken) — men nästa rond startar inte förrän BÅDA
+        // spelarna tryckt "Spela igen" (se btn-play-again nedan).
+        if (round?.winner && !round.scored && finishedRoundKey !== round.roundNumber) {
+            finishedRoundKey = round.roundNumber;
+            finishRound(currentCode).catch(() => { /* motparten hann redan lösa det */ });
         }
-        return;
-    }
-
-    if (room.status === "finished") {
-        resetRoundEndTimer();
-        showScreen("match-over");
-        renderMatchOver(room, myPlayerId);
     }
 }
 
@@ -114,6 +112,57 @@ function buildShareUrl(code) {
     url.search = `?code=${code}`;
     return url.toString();
 }
+
+// --- Profilväljare ---
+async function refreshProfileList() {
+    const list = document.getElementById("profile-list");
+    try {
+        const profiles = await listProfiles();
+        renderProfileList(list, profiles, onProfilePicked);
+    } catch {
+        setError("profile", "Kunde inte hämta profiler. Försök igen.");
+    }
+}
+
+function onProfilePicked(profile) {
+    myProfile = profile;
+    storeProfile(profile);
+    setCurrentProfileLabel(profile.name);
+    setError("profile", "");
+    if (pendingJoinCode) {
+        const code = pendingJoinCode;
+        pendingJoinCode = null;
+        document.getElementById("join-code").value = code;
+        showScreen("join");
+    } else {
+        showScreen("home");
+    }
+}
+
+document.getElementById("form-profile-new").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setError("profile", "");
+    const name = document.getElementById("profile-new-name").value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    try {
+        const profile = await getOrCreateProfileByName(name);
+        document.getElementById("profile-new-name").value = "";
+        onProfilePicked(profile);
+    } catch (err) {
+        setError("profile", err.message || "Kunde inte skapa profilen. Försök igen.");
+    } finally {
+        submitBtn.disabled = false;
+    }
+});
+
+document.getElementById("btn-switch-profile").addEventListener("click", () => {
+    clearStoredProfile();
+    myProfile = null;
+    setError("profile", "");
+    showScreen("profile");
+    refreshProfileList();
+});
 
 // --- Startskärm ---
 document.getElementById("btn-show-create").addEventListener("click", () => {
@@ -131,13 +180,11 @@ document.getElementById("btn-join-back").addEventListener("click", () => showScr
 document.getElementById("form-create").addEventListener("submit", async (e) => {
     e.preventDefault();
     setError("create", "");
-    const name = document.getElementById("create-name").value.trim().slice(0, 20);
     const gameId = document.querySelector('input[name="gameId"]:checked').value;
-    const bestOf = Number(document.querySelector('input[name="bestOf"]:checked').value);
     const submitBtn = e.target.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     try {
-        const { code, playerId } = await createRoom(gameId, bestOf, name);
+        const { code, playerId } = await createRoom(gameId, myProfile);
         currentCode = code;
         myPlayerId = playerId;
         subscribe(code);
@@ -154,12 +201,11 @@ document.getElementById("form-create").addEventListener("submit", async (e) => {
 document.getElementById("form-join").addEventListener("submit", async (e) => {
     e.preventDefault();
     setError("join", "");
-    const name = document.getElementById("join-name").value.trim().slice(0, 20);
     const code = document.getElementById("join-code").value;
     const submitBtn = e.target.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     try {
-        const result = await joinRoom(code, name);
+        const result = await joinRoom(code, myProfile);
         currentCode = result.code;
         myPlayerId = result.playerId;
         subscribe(result.code);
@@ -183,7 +229,7 @@ function setupLobbyLinks(code) {
     if (navigator.share) {
         shareBtn.classList.remove("hidden");
         shareBtn.onclick = () => {
-            navigator.share({ title: "Brädspel", text: `Spela mot mig! Rumskod: ${code}`, url }).catch(() => {});
+            navigator.share({ title: "Boardgame", text: `Spela mot mig! Rumskod: ${code}`, url }).catch(() => {});
         };
     } else {
         shareBtn.classList.add("hidden");
@@ -247,30 +293,85 @@ document.getElementById("btn-leave-game").addEventListener("click", () => {
     showScreen("home");
 });
 
-// --- Matchen är slut ---
-document.getElementById("btn-rematch").addEventListener("click", async (e) => {
+// Ny rond kräver att BÅDA spelarna trycker "Spela igen" efter en
+// avslutad rond (se rooms.js markReadyForNext + ui.js renderGame).
+document.getElementById("btn-play-again").addEventListener("click", (e) => {
+    if (!currentCode || !myPlayerId) return;
     e.target.disabled = true;
-    try {
-        await startRematch(currentCode);
-    } finally {
+    markReadyForNext(currentCode, myPlayerId).catch(() => {
         e.target.disabled = false;
+    });
+});
+
+// --- Statistik ---
+let statsCache = null; // { entries, profiles } — hämtas en gång per öppning
+
+async function openStats() {
+    showScreen("stats");
+    const results = document.getElementById("stats-results");
+    results.innerHTML = "";
+    try {
+        const [entries, profiles] = await Promise.all([fetchStatsLog(), listProfiles()]);
+        statsCache = { entries, profiles };
+        populateStatsFilters(profiles, myProfile?.id);
+        renderStatsView();
+    } catch {
+        statsCache = { entries: [], profiles: [] };
+        renderStatsView();
     }
-});
+}
 
-document.getElementById("btn-home").addEventListener("click", () => {
-    leaveRoomState();
-    showScreen("home");
-});
+function renderStatsView() {
+    if (!statsCache) return;
+    const gameId = document.getElementById("stats-game").value || "all";
+    const timeframe = document.getElementById("stats-timeframe").value || "all";
+    const opponentId = document.getElementById("stats-opponent").value || "all";
+    const filtered = filterEntries(statsCache.entries, { gameId, timeframe });
 
-// --- Start: läs ev. ?code= i länken och hoppa direkt till "gå med" ---
-(function init() {
+    if (opponentId === "all" || !myProfile) {
+        const rows = buildLeaderboard(filtered);
+        renderStatsResults(document.getElementById("stats-results"), { mode: "leaderboard", rows });
+        return;
+    }
+
+    const opponent = statsCache.profiles.find((p) => p.id === opponentId);
+    const headToHead = buildHeadToHead(filtered, myProfile.id, opponentId);
+    renderStatsResults(document.getElementById("stats-results"), {
+        mode: "head2head",
+        headToHead,
+        myName: myProfile.name,
+        opponentName: opponent ? opponent.name : "okänd",
+        myProfileId: myProfile.id,
+    });
+}
+
+document.getElementById("btn-show-stats").addEventListener("click", openStats);
+document.getElementById("btn-stats-back").addEventListener("click", () => showScreen("home"));
+document.getElementById("stats-game").addEventListener("change", renderStatsView);
+document.getElementById("stats-timeframe").addEventListener("change", renderStatsView);
+document.getElementById("stats-opponent").addEventListener("change", renderStatsView);
+
+// --- Start: läs ev. ?code= i länken, hoppa till profilval om ingen
+// profil är vald ännu, annars rakt till gå-med/hem ---
+(async function init() {
     document.getElementById("app-version").textContent = APP_VERSION;
     const params = new URLSearchParams(location.search);
     const codeFromLink = normalizeCode(params.get("code") || "");
-    if (codeFromLink) {
-        document.getElementById("join-code").value = codeFromLink;
-        showScreen("join");
-    } else {
-        showScreen("home");
+
+    const stored = getStoredProfile();
+    if (stored) {
+        myProfile = stored;
+        setCurrentProfileLabel(stored.name);
+        if (codeFromLink) {
+            document.getElementById("join-code").value = codeFromLink;
+            showScreen("join");
+        } else {
+            showScreen("home");
+        }
+        return;
     }
+
+    pendingJoinCode = codeFromLink || null;
+    showScreen("profile");
+    refreshProfileList();
 })();

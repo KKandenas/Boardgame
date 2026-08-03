@@ -21,9 +21,8 @@ backend. Inga byggverktyg krävs.
   Ronden slutar när ingen av spelarna kan dra mer — flest brickor
   vinner (oavgjort vid lika antal).
 - **Backgammon** — fullständiga reglerna inklusive dubbleringstärning
-  och gammon/backgammon-poäng. Spelas TILL ett poängmål (samma
-  3/5/7-val som "bäst av" ovan, men här tolkat som poänggräns) istället
-  för bäst-av-N-ronder. En medveten förenkling: appen kräver inte att
+  och gammon/backgammon-poäng (`round.pointValue`, visas som "(2/3
+  poäng)" i statusraden). En medveten förenkling: appen kräver inte att
   man spelar tärningarna i den ordning som maximerar hur många som går
   att använda när läget är delvis blockerat — se kommentaren högst upp
   i `js/games/backgammon.js` för detaljer.
@@ -40,17 +39,41 @@ nedan.
 
 ## Så funkar det
 
-1. Spelare 1 trycker **Skapa rum**, väljer spel och bäst av 3/5/7, och
-   får en 4-teckens rumskod (och en delningslänk).
-2. Spelare 2 trycker **Gå med i rum** och matar in koden — eller öppnar
-   delningslänken direkt, då fylls koden i automatiskt.
-3. När båda är anslutna startar första ronden med det valda spelets
+1. Första gången appen öppnas väljer man sin **profil** — ett namn utan
+   lösenord/PIN (se "Kända begränsningar"). Profilen är global (delas
+   mellan alla rum) och används både som visningsnamn och som identitet
+   i statistiken. Sparas i `localStorage` så man slipper välja om den
+   vid varje besök — "byt profil" på hemskärmen för att välja en annan.
+2. Spelare 1 trycker **Skapa rum**, väljer spel, och får en
+   4-teckens rumskod (och en delningslänk). Inget "bäst av"-val längre
+   — se punkt 4.
+3. Spelare 2 trycker **Gå med i rum** och matar in koden — eller öppnar
+   delningslänken direkt, då fylls koden i automatiskt (och profilval
+   sker först om ingen profil valts tidigare på den enheten).
+4. När båda är anslutna startar första ronden med det valda spelets
    regler. Varje drag syncas i realtid till motståndarens telefon.
-4. Efter varje runda uppdateras ställningen och en ny runda startar
-   automatiskt (den som inte började föregående runda börjar nästa).
-5. När någon når tillräckligt många vinster (t.ex. 2 av 3) visas
-   matchresultatet, med möjlighet till revansch i samma rum (samma
-   spel som valdes från början).
+   Rondar spelas kontinuerligt utan något matchmål: när en rond får en
+   vinnare loggas resultatet direkt till statistiken, men en NY rond
+   startar först när BÅDA spelarna tryckt **Spela igen** — vem som
+   helst kan istället lämna rummet när som helst.
+
+## Statistik/leaderboard
+
+Alla profiler kan se allas statistik (öppen leaderboard, inget privat
+läge). Från hemskärmen → **Statistik**:
+
+- **Topplista** (standardvy) — rankad efter flest vinster inom valt
+  filter, med förluster/oavgjorda/vinstprocent.
+- **Head-to-head** — välj en specifik motståndare i "Motståndare"-
+  filtret för att istället se din egen historik mot just den profilen
+  (vinster/förluster/oavgjort + senaste matcherna).
+- Filtrera på **spel** (per spel eller alla samlat) och **tidsperiod**
+  (idag/senaste veckan/månaden/året/totalt).
+
+All aggregering sker client-side i `js/stats.js` (rena funktioner, inga
+DOM-/Firebase-anrop) genom att läsa hela `luffarschack/statsLog` — ett
+enkelt, litet dataset för en app som den här, så ingen databas-frågelogik
+behövs.
 
 ## Köra spelet
 
@@ -78,13 +101,16 @@ eller Pythons inbyggda server:
 
 ## Filstruktur
 
-    index.html          Markup för samtliga skärmar (hem/skapa/gå med/lobby/spel/matchslut)
+    index.html          Markup för samtliga skärmar (profil/hem/skapa/gå med/lobby/spel/statistik)
     style.css            All styling, mobilanpassad (touch-vänlig, safe-area)
     manifest.json         PWA-manifest ("Lägg till på hemskärmen")
     js/
-      firebase.js         Firebase-init + generiska, transaktionssäkra DB-helpers
-      rooms.js             Rum: skapa/gå med, spelaridentitet, drag- och rond-/matchövergångar
+      firebase.js         Firebase-init + generiska, transaktionssäkra DB-helpers (inkl. dbPush)
+      profiles.js          Globala spelarprofiler (skapa/lista/spara i localStorage) + hämta statsLog
+      rooms.js             Rum: skapa/gå med, spelaridentitet, drag- och rondövergångar,
+                            rondslut + ömsesidig "spela igen"-bekräftelse, statistikloggning
                             — helt agnostisk om VILKET spel som spelas
+      stats.js              Ren aggregeringslogik för statistik/leaderboard (inga DOM-/Firebase-anrop)
       ui.js                All DOM-rendering, bygger brädet dynamiskt utifrån aktivt spel
       main.js              Skärmväxling, formulär, händelsebindning, Firebase-lyssnare
       games/
@@ -100,9 +126,7 @@ eller Pythons inbyggda server:
 Varje fil i `js/games/` (utom `shared.js`/`registry.js`) exporterar
 minst:
 
-    meta              { id, label, description, boardClass, matchFormat? }
-                       matchFormat: "games" (bäst av N-vinster, default)
-                       eller "points" (spela TILL N poäng — se backgammon)
+    meta              { id, label, description, boardClass }
     createBoard()      initial bräda för en ny runda
     applyAction(round, action, playerId, mySymbol, otherPlayerId)
                        ren funktion, returnerar en NY runda (eller
@@ -135,14 +159,22 @@ Lägg sedan till modulen i `js/games/registry.js` och en radioknapp i
 - Delar Firebase-projekt med det andra spelet i denna organisation
   (samma klientkonfiguration — den är inte hemlig, säkerheten sitter i
   Realtime Database-reglerna). All data för det här spelet ligger
-  isolerat under toppnoden `luffarschack/` i databasen.
+  isolerat under toppnoden `luffarschack/` i databasen: `rooms/` (rum),
+  `profiles/` (spelarprofiler) och `statsLog/` (append-only-logg över
+  avslutade ronder, en post per `dbPush`).
 - Rumskoder och spelutgång (drag, poängräkning, rondövergångar) skrivs
   via Firebase-transaktioner på hela rum-noden. Det gör operationerna
   idempotenta: båda spelarnas klienter kan räkna ut och skriva samma
   resultat oberoende av varandra utan att krocka — ingen av klienterna
-  behöver vara "auktoritativ värd".
-- Spelaridentitet sparas i `localStorage` per rumskod, så en
-  omladdning av sidan inte tappar bort vem man är i pågående parti.
+  behöver vara "auktoritativ värd". Rondslut (`finishRound`) och
+  statistikloggning fungerar likadant: transaktionen garanterar att bara
+  EN av de två klienterna faktiskt loggar en given rond, så ingen
+  dubbelloggning kan ske även om båda klienterna märker rondslutet
+  samtidigt.
+- Spelarprofil sparas i `localStorage` (delas mellan alla rum på samma
+  enhet), och rumsspecifik spelaridentitet (playerId) sparas separat per
+  rumskod — en omladdning av sidan tappar alltså aldrig bort vare sig
+  vem man är eller vilket parti man är mitt i.
 - Frånkoppling hanteras med Firebase `onDisconnect` — lämnar spelaren
   (stängd flik, tappad uppkoppling) markeras de som frånkopplade och en
   banner visas för motståndaren.
@@ -158,5 +190,13 @@ Lägg sedan till modulen i `js/games/registry.js` och en radioknapp i
   **Sänka skepp**: appen döljer bara motståndarens flotta i UI:t, den
   gömmer den inte på riktigt — en spelare som tittar i webbläsarens
   nätverksflik kan i teorin se var motståndarens skepp ligger.
-- Gamla/övergivna rum städas inte bort ur databasen.
+- **Profiler har varken lösenord eller PIN** — ett medvetet val (matchar
+  appens "inga konton"-filosofi) men det betyder att vem som helst med
+  tillgång till appen kan välja en befintlig profil (t.ex. "Kristian")
+  och spela/logga statistik i dess namn. Fungerar bra bland betrodda
+  spelare, men lita inte på leaderboarden som bevis mot någon som vill
+  fuska.
+- Gamla/övergivna rum städas inte bort ur databasen. Detsamma gäller
+  `statsLog` — den växer obegränsat (litet dataset för en hobbyapp, men
+  inget automatiskt städas bort).
 - Ingen chatt eller emote-funktion mellan spelarna ännu.
