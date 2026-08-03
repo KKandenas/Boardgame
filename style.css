@@ -633,6 +633,22 @@ h2 {
 
 .bg-bar .bg-stack { padding: 0; }
 
+/* Slagna brickor på bar syntes dåligt: bar-kolumnen är smalare än en
+   vanlig punkt (0.55fr mot 1fr), så .bg-checkers 82%-av-stacken blev
+   för liten där — och en svart bricka (nästan svart bakgrund/kant)
+   syntes knappt alls mot barens egen mörka bakgrund. Fast pixelstorlek
+   (större än på punkterna, eftersom bar-läget är viktigt att se) och
+   en ljus ring runt svart löser båda. */
+.bg-bar .bg-checker {
+    width: 26px;
+    max-width: none;
+    font-size: 0.7rem;
+}
+
+.bg-bar .bg-checker.mark-x {
+    border: 2px solid #f4f4f5;
+}
+
 .bg-bar.selected {
     outline: 2px solid #fbbf24;
     outline-offset: -2px;
