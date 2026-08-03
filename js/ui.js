@@ -3,7 +3,7 @@
 // Firebase + vem jag är) och uppdaterar DOM:en. Inga Firebase-anrop i den
 // här filen — bara läsning av data och uppdatering av skärmen.
 
-import { boardToCells, winsNeeded } from "./game.js?v=7";
+import { boardToCells, winsNeeded } from "./game.js?v=8";
 
 const screens = {
     home: document.getElementById("screen-home"),
