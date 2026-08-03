@@ -5,9 +5,9 @@
 import {
     createRoom, joinRoom, makeMove, resolveRoundEnd, startRematch,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=11";
-import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js?v=11";
-import { getGame } from "./games/registry.js?v=11";
+} from "./rooms.js?v=13";
+import { showScreen, renderLobby, renderGame, renderMatchOver, setError } from "./ui.js?v=13";
+import { getGame } from "./games/registry.js?v=13";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
@@ -16,7 +16,7 @@ import { getGame } from "./games/registry.js?v=11";
 // annars riskerar olika filer att cachas separat och hamna i otakt —
 // vilket var precis orsaken till att "rummet hittades inte" kvarstod
 // trots att fixen redan var pushad.
-export const APP_VERSION = "build 11 · 2026-08-03";
+export const APP_VERSION = "build 13 · 2026-08-03";
 
 let currentCode = null;
 let myPlayerId = null;
@@ -29,6 +29,21 @@ let roundEndTimer = null;
 let lastRoom = null;
 let selectedCell = null;
 let lastTurnKey = null;
+
+// Delas med spel som renderar sitt eget bräde (game.renderBoard) — de
+// bygger och binder klickhanterare direkt vid rendering istället för att
+// gå via den delegerade #board-lyssnaren längre ner.
+function setSelectedCell(cell) {
+    selectedCell = cell;
+    renderGame(lastRoom, myPlayerId, selectedCell, gameCallbacks);
+}
+
+function sendAction(action) {
+    if (!currentCode || !myPlayerId) return;
+    makeMove(currentCode, action, myPlayerId).catch(() => { /* ogiltig handling, ignorera */ });
+}
+
+const gameCallbacks = { setSelectedCell, sendAction };
 
 function resetRoundEndTimer() {
     if (roundEndTimer) {
@@ -75,7 +90,7 @@ function onRoomUpdate(room) {
         lastRoom = room;
 
         showScreen("game");
-        renderGame(room, myPlayerId, selectedCell);
+        renderGame(room, myPlayerId, selectedCell, gameCallbacks);
 
         if (round?.winner && !round.scored && scheduledRoundNumber !== round.roundNumber) {
             scheduledRoundNumber = round.roundNumber;
@@ -197,16 +212,23 @@ document.getElementById("btn-lobby-cancel").addEventListener("click", () => {
 // per cell. Själva klicklogiken (direkt drag, tvåstegs val+flytt, etc.)
 // avgörs helt av den aktuella spelmodulens onCellClick — main.js vet
 // inget om enskilda spelregler.
+//
+// Spel med eget bräde (game.renderBoard, t.ex. backgammon — inte ett
+// enkelt rutnät) binder sina egna klickhanterare direkt vid rendering
+// (se gameCallbacks ovan) och hanteras INTE av den här delegeringen.
 document.getElementById("board").addEventListener("click", (e) => {
+    if (!currentCode || !myPlayerId || !lastRoom?.round) return;
+    const game = getGame(lastRoom.gameId);
+    if (typeof game.renderBoard === "function") return;
+
     const cellEl = e.target.closest(".cell");
-    if (!cellEl || !currentCode || !myPlayerId || !lastRoom?.round) return;
+    if (!cellEl) return;
     const cellIndex = Number(cellEl.id.slice("cell-".length));
 
     const round = lastRoom.round;
     const me = lastRoom.players?.[myPlayerId];
     if (!me || round.winner || round.turn !== myPlayerId) return;
 
-    const game = getGame(lastRoom.gameId);
     game.onCellClick({
         round,
         board: round.board,
@@ -214,13 +236,8 @@ document.getElementById("board").addEventListener("click", (e) => {
         mySymbol: me.symbol,
         cellIndex,
         selectedCell,
-        setSelectedCell: (cell) => {
-            selectedCell = cell;
-            renderGame(lastRoom, myPlayerId, selectedCell);
-        },
-        sendAction: (action) => {
-            makeMove(currentCode, action, myPlayerId).catch(() => {});
-        },
+        setSelectedCell,
+        sendAction,
     });
 });
 

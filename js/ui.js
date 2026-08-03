@@ -4,8 +4,8 @@
 // här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
 // från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells, winsNeeded } from "./games/shared.js?v=11";
-import { getGame } from "./games/registry.js?v=11";
+import { boardToCells, winsNeeded } from "./games/shared.js?v=13";
+import { getGame } from "./games/registry.js?v=13";
 
 const screens = {
     home: document.getElementById("screen-home"),
@@ -41,8 +41,11 @@ export function renderLobby(room, code) {
         : "Väntar på motståndare…";
 }
 
-// Brädet byggs om i DOM:en bara när spelet (och därmed dimensionerna)
-// faktiskt ändras — annars återanvänds samma knappar mellan renderingar.
+// Rutnätsbrädet byggs om i DOM:en bara när spelet (och därmed
+// dimensionerna) faktiskt ändras. Spel med eget bräde (game.renderBoard,
+// t.ex. backgammon) hanterar sin egen DOM helt själva varje rendering —
+// då nollställs den här nyckeln så att ett EFTERFÖLJANDE rutnätsspel
+// tvingas bygga om från grunden.
 let builtBoardKey = null;
 
 function ensureBoardGrid(game) {
@@ -67,7 +70,10 @@ function ensureBoardGrid(game) {
     boardEl.appendChild(frag);
 }
 
-export function renderGame(room, myPlayerId, selectedCell = null) {
+// `callbacks` (setSelectedCell/sendAction) behövs bara av spel med eget
+// bräde (game.renderBoard) — de bygger och binder sina klickhanterare
+// direkt själva istället för att gå via main.js generiska cell-delegering.
+export function renderGame(room, myPlayerId, selectedCell = null, callbacks = {}) {
     const me = room.players?.[myPlayerId];
     const oppId = getOpponentId(room, myPlayerId);
     const opp = oppId ? room.players[oppId] : null;
@@ -75,8 +81,6 @@ export function renderGame(room, myPlayerId, selectedCell = null) {
     if (!me || !round) return;
 
     const game = getGame(room.gameId);
-    ensureBoardGrid(game);
-
     const myTurn = !round.winner && round.turn === myPlayerId && !!oppId;
 
     const meChip = document.getElementById("chip-me");
@@ -92,26 +96,39 @@ export function renderGame(room, myPlayerId, selectedCell = null) {
     meChip.classList.toggle("active-turn", !round.winner && round.turn === myPlayerId);
     oppChip.classList.toggle("active-turn", !round.winner && !!oppId && round.turn === oppId);
 
-    const need = winsNeeded(room.bestOf);
-    document.getElementById("round-indicator").textContent =
-        `${game.meta.label} · Runda ${round.roundNumber} · Bäst av ${room.bestOf} (${need} vinster avgör)`;
+    const matchFormat = game.meta.matchFormat || "games";
+    document.getElementById("round-indicator").textContent = matchFormat === "points"
+        ? `${game.meta.label} · Runda ${round.roundNumber} · Spel till ${room.bestOf} poäng`
+        : `${game.meta.label} · Runda ${round.roundNumber} · Bäst av ${room.bestOf} (${winsNeeded(room.bestOf)} vinster avgör)`;
 
-    const cellCount = game.meta.rows * game.meta.cols;
-    const cells = boardToCells(round.board, cellCount);
-    const winSet = new Set(round.winLine || []);
-    for (let i = 0; i < cellCount; i++) {
-        const cellEl = document.getElementById(`cell-${i}`);
-        cellEl.textContent = game.meta.showGlyph ? (cells[i] || "") : "";
-        cellEl.classList.toggle("mark-x", cells[i] === "X");
-        cellEl.classList.toggle("mark-o", cells[i] === "O");
-        cellEl.classList.toggle("win", winSet.has(i));
-        cellEl.classList.toggle("selected", selectedCell === i);
-
-        const canInteract = game.cellInteractable({
-            round, board: round.board, cellIndex: i, mySymbol: me.symbol, myTurn, selectedCell,
+    if (typeof game.renderBoard === "function") {
+        const boardEl = document.getElementById("board");
+        boardEl.className = `board ${game.meta.boardClass || ""}`;
+        game.renderBoard(boardEl, {
+            round, room, myPlayerId, mySymbol: me.symbol, oppId, opp, myTurn, selectedCell,
+            setSelectedCell: callbacks.setSelectedCell,
+            sendAction: callbacks.sendAction,
         });
-        cellEl.classList.toggle("hint", canInteract && !cells[i]);
-        cellEl.disabled = !canInteract;
+        builtBoardKey = null;
+    } else {
+        ensureBoardGrid(game);
+        const cellCount = game.meta.rows * game.meta.cols;
+        const cells = boardToCells(round.board, cellCount);
+        const winSet = new Set(round.winLine || []);
+        for (let i = 0; i < cellCount; i++) {
+            const cellEl = document.getElementById(`cell-${i}`);
+            cellEl.textContent = game.meta.showGlyph ? (cells[i] || "") : "";
+            cellEl.classList.toggle("mark-x", cells[i] === "X");
+            cellEl.classList.toggle("mark-o", cells[i] === "O");
+            cellEl.classList.toggle("win", winSet.has(i));
+            cellEl.classList.toggle("selected", selectedCell === i);
+
+            const canInteract = game.cellInteractable({
+                round, board: round.board, cellIndex: i, mySymbol: me.symbol, myTurn, selectedCell,
+            });
+            cellEl.classList.toggle("hint", canInteract && !cells[i]);
+            cellEl.disabled = !canInteract;
+        }
     }
 
     const statusEl = document.getElementById("game-status");
@@ -126,12 +143,13 @@ export function renderGame(room, myPlayerId, selectedCell = null) {
         banner.classList.add("hidden");
     }
 
+    const pointsSuffix = round.pointValue > 1 ? ` (${round.pointValue} poäng)` : "";
     if (round.winner === "draw") {
         statusEl.textContent = "Oavgjort! Nästa runda börjar strax…";
     } else if (round.winner === me.symbol) {
-        statusEl.textContent = "Du vann ronden! 🎉";
+        statusEl.textContent = `Du vann ronden!${pointsSuffix} 🎉`;
     } else if (round.winner) {
-        statusEl.textContent = "Motståndaren vann ronden.";
+        statusEl.textContent = `Motståndaren vann ronden.${pointsSuffix}`;
     } else if (!oppId) {
         // hanteras redan ovan (väntar på motståndare)
     } else {

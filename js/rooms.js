@@ -6,19 +6,25 @@
 // krocka. Helt agnostisk om VILKET spel som spelas — det avgörs av
 // registret i js/games/registry.js (room.gameType pekar ut modulen).
 
-import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=11";
-import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=11";
-import { winsNeeded } from "./games/shared.js?v=11";
+import { paths, dbGet, dbSet, dbTransact, dbListen, registerPresence } from "./firebase.js?v=13";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=13";
+import { winsNeeded } from "./games/shared.js?v=13";
 
+// Spel kan lägga till egna initiala fält på runde-nivå (t.ex. backgammons
+// dubbleringstärning) via en valfri game.initialRoundState()-hook.
 function createRound(gameId, roundNumber, startingPlayerId) {
+    const game = getGame(gameId);
+    const extra = game.initialRoundState ? game.initialRoundState() : {};
     return {
         roundNumber,
-        board: getGame(gameId).createBoard(),
+        board: game.createBoard(),
         turn: startingPlayerId,
         startingPlayer: startingPlayerId,
         winner: null,
         winLine: null,
+        pointValue: 1,
         scored: false,
+        ...extra,
     };
 }
 
@@ -185,11 +191,15 @@ export async function resolveRoundEnd(code) {
         const playerIds = Object.keys(current.players || {});
         if (round.winner !== "draw") {
             const winnerId = playerIds.find((id) => current.players[id].symbol === round.winner);
-            if (winnerId) score[winnerId] = (score[winnerId] || 0) + 1;
+            if (winnerId) score[winnerId] = (score[winnerId] || 0) + (round.pointValue || 1);
         }
 
-        const need = winsNeeded(current.bestOf);
-        const matchWinnerId = playerIds.find((id) => (score[id] || 0) >= need) || null;
+        // De flesta spel (luffarschack/Othello) spelas bäst av N ronder —
+        // en majoritet av vinster avgör. Poängbaserade spel (backgammon,
+        // med dubbleringstärning/gammon) spelas istället TILL N poäng.
+        const game = getGame(current.gameId);
+        const target = game.meta.matchFormat === "points" ? current.bestOf : winsNeeded(current.bestOf);
+        const matchWinnerId = playerIds.find((id) => (score[id] || 0) >= target) || null;
 
         if (matchWinnerId) {
             return {

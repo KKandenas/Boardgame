@@ -20,6 +20,13 @@ backend. Inga byggverktyg krävs.
   din färg. Saknar man lagliga drag hoppar turen automatiskt över.
   Ronden slutar när ingen av spelarna kan dra mer — flest brickor
   vinner (oavgjort vid lika antal).
+- **Backgammon** — fullständiga reglerna inklusive dubbleringstärning
+  och gammon/backgammon-poäng. Spelas TILL ett poängmål (samma
+  3/5/7-val som "bäst av" ovan, men här tolkat som poänggräns) istället
+  för bäst-av-N-ronder. En medveten förenkling: appen kräver inte att
+  man spelar tärningarna i den ordning som maximerar hur många som går
+  att använda när läget är delvis blockerat — se kommentaren högst upp
+  i `js/games/backgammon.js` för detaljer.
 
 Fler spel läggs till i `js/games/` — se "Lägga till ett nytt spel"
 nedan.
@@ -76,28 +83,44 @@ eller Pythons inbyggda server:
       games/
         registry.js          Register över alla spel (id → modul) — hit läggs nya spel
         shared.js            Hjälpfunktioner gemensamma för alla spel
-        tictactoe.js         Luffarschack: regler + UI-hooks
-        othello.js           Othello: regler + UI-hooks
+        tictactoe.js         Luffarschack: regler + UI-hooks (rutnätsbräde)
+        othello.js           Othello: regler + UI-hooks (rutnätsbräde)
+        backgammon.js         Backgammon: regler + eget bräde (renderBoard)
 
 ## Lägga till ett nytt spel
 
-Varje fil i `js/games/` (utom `shared.js`/`registry.js`) exporterar:
+Varje fil i `js/games/` (utom `shared.js`/`registry.js`) exporterar
+minst:
 
-    meta              { id, label, description, rows, cols, boardClass, showGlyph }
+    meta              { id, label, description, boardClass, matchFormat? }
+                       matchFormat: "games" (bäst av N-vinster, default)
+                       eller "points" (spela TILL N poäng — se backgammon)
     createBoard()      initial bräda för en ny runda
     applyAction(round, action, playerId, mySymbol, otherPlayerId)
                        ren funktion, returnerar en NY runda (eller
                        samma referens om handlingen var ogiltig).
-                       Ansvarar själv för tur-/vinstlogik, inklusive ev.
-                       automatiska passningar (se othello.js).
-    cellInteractable(ctx)   avgör om en ruta ska vara klickbar just nu
-    onCellClick(ctx)         vad som händer vid klick (skicka drag direkt,
-                             eller tvåstegs val+destination, etc.)
+                       Ansvarar själv för tur-/vinstlogik — inklusive ev.
+                       automatiska passningar (othello.js) och ev.
+                       round.pointValue för poängbaserade spel
+                       (backgammon.js).
+    symbolLabel(symbol)?     visningsnamn för X/O (t.ex. "Svart"/"Vitt")
+    initialRoundState()?     extra fält på runde-nivå utöver standard
+                             (backgammon: tärningar, dubbleringstärning)
     statusText(ctx)          statustext när det inte är vinst/väntan
+
+Sedan väljer spelet EN av två sätt att rendera brädet:
+
+1. **Rutnät** (tictactoe.js/othello.js) — sätt `meta.rows`/`cols`/
+   `showGlyph` och exportera `cellInteractable(ctx)` +
+   `onCellClick(ctx)`. ui.js bygger och sköter hela rutnätet automatiskt.
+2. **Eget bräde** (backgammon.js) — exportera `renderBoard(container, ctx)`
+   som bygger HELA sin DOM och binder sina egna klickhanterare direkt
+   (`ctx.sendAction`/`ctx.setSelectedCell`). Använd när spelet inte är
+   ett enkelt rutnät (annan form, extra kontroller som tärningar/kub).
 
 Lägg sedan till modulen i `js/games/registry.js` och en radioknapp i
 `index.html` (fieldset "Spel" i #screen-create). Resten av appen
-(rum, matchning, poängräkning, bräd-rendering) är redan generiskt.
+(rum, matchning, poängräkning) är redan generiskt.
 
 ## Teknik i korthet
 

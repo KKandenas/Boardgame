@@ -9,7 +9,7 @@
 // (cellInteractable/onCellClick/statusText) som gör att ui.js/main.js
 // kan vara generiska över vilket spel som spelas.
 
-import { otherSymbolOf } from "./shared.js?v=11";
+import { otherSymbolOf } from "./shared.js?v=13";
 
 export const meta = {
     id: "tictactoe",
@@ -19,6 +19,7 @@ export const meta = {
     cols: 3,
     boardClass: "board--tictactoe",
     showGlyph: true,
+    matchFormat: "games",
 };
 
 const WIN_LINES = [

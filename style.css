@@ -171,7 +171,13 @@ h2 {
 
 .radio-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
+}
+
+.radio-row .radio-chip {
+    flex: 1 1 auto;
+    min-width: 5.5rem;
 }
 
 .radio-chip {
@@ -449,6 +455,210 @@ h2 {
     height: 20%;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Backgammon: 24 punkter i hästsko, bar i mitten, hem-bärning i
+   högerkant. Rendereras helt av js/games/backgammon.js, inte av det
+   generiska rutnätssystemet. --- */
+.board--backgammon {
+    display: block;
+    background: transparent;
+    aspect-ratio: auto;
+}
+
+.bg-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr) 0.55fr repeat(6, 1fr) 0.75fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    aspect-ratio: 15 / 9;
+    background: #2b1a10;
+    border: 1px solid #1a0f08;
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.bg-point {
+    appearance: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    touch-action: manipulation;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    position: relative;
+    background: #3a2416;
+}
+
+.bg-point.top {
+    align-items: flex-start;
+    clip-path: polygon(8% 0%, 92% 0%, 50% 100%);
+}
+
+.bg-point.bottom {
+    align-items: flex-end;
+    clip-path: polygon(50% 0%, 92% 100%, 8% 100%);
+}
+
+.bg-point.shade-a { background: #4a3220; }
+.bg-point.shade-b { background: #6b4a2c; }
+
+.bg-point:disabled { cursor: default; }
+
+.bg-point.selected {
+    outline: 2px solid #fbbf24;
+    outline-offset: -2px;
+}
+
+.bg-point.hint::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18%;
+    height: 18%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.bg-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding-top: 3px;
+}
+
+.bg-point.bottom .bg-stack {
+    flex-direction: column-reverse;
+    padding-top: 0;
+    padding-bottom: 3px;
+}
+
+.bg-checker {
+    width: 82%;
+    aspect-ratio: 1 / 1;
+    max-width: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 800;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.bg-checker.mark-x {
+    background: var(--accent);
+    color: #04211c;
+}
+
+.bg-checker.mark-o {
+    background: var(--o-color);
+    color: #3a0620;
+}
+
+.bg-bar {
+    appearance: none;
+    border: none;
+    grid-row: span 1;
+    background: #1a0f08;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    border-radius: 4px;
+}
+
+.bg-bar:disabled { cursor: default; }
+
+.bg-bar .bg-stack { padding: 0; }
+
+.bg-bar.selected {
+    outline: 2px solid #fbbf24;
+    outline-offset: -2px;
+}
+
+.bg-off {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1px;
+    padding: 2px;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.bg-off:disabled { cursor: default; opacity: 0.7; }
+
+.bg-off.hint {
+    outline: 2px solid #fbbf24;
+    outline-offset: -2px;
+}
+
+.bg-off .bg-checker { max-width: 14px; }
+
+.bg-panel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.bg-cube {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    text-align: center;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+.bg-cube-owner {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    font-weight: 400;
+}
+
+.bg-dice {
+    display: flex;
+    gap: 6px;
+}
+
+.bg-die {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: #f4f4f5;
+    color: #16171c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.bg-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+.bg-action-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
 }
 
 .hidden {
