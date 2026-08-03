@@ -1,4 +1,4 @@
-# Luffarschack
+# Boardgame
 
 Bräddspel för mobilen — två spelare, varsin telefon, i realtid, med
 flera spel att välja mellan. Webbaserat, byggt i vanilla
@@ -63,7 +63,7 @@ blockeras av webbläsaren annars.
 2. Under "Build and deployment" → Source: välj "Deploy from a branch",
    branch `main`, mapp `/(root)`.
 3. Spara. Efter någon minut är spelet live på
-   `https://kkandenas.github.io/luffarschack/`
+   `https://kkandenas.github.io/Boardgame/`
 
 ### Lokalt under utveckling
 Valfri enkel statisk server, t.ex.:
