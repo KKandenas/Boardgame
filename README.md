@@ -33,6 +33,10 @@ backend. Inga byggverktyg krävs.
   skott oavsett träff eller miss. Den som sänker hela motståndarflottan
   först vinner ronden. Se "Kända begränsningar" nedan angående
   flottans synlighet i databasen.
+- **4 i rad** — klassiskt 7x6-bräde. Man klickar var som helst i en
+  kolumn (inte en specifik ruta) — brickan "faller" till den lägsta
+  lediga raden i den kolumnen. Först med 4 i rad vågrätt, lodrätt eller
+  diagonalt vinner; oavgjort om brädet blir fullt utan att någon vunnit.
 
 Fler spel läggs till i `js/games/` — se "Lägga till ett nytt spel"
 nedan.
@@ -128,6 +132,7 @@ eller Pythons inbyggda server:
         othello.js           Othello: regler + UI-hooks (rutnätsbräde)
         backgammon.js         Backgammon: regler + eget bräde (renderBoard)
         battleship.js          Sänka skepp: regler + eget bräde (placering + strid, renderBoard)
+        connectfour.js         4 i rad: regler + UI-hooks (rutnätsbräde, klick i kolumn -> droppar)
 
 ## Lägga till ett nytt spel
 
