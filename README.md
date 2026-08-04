@@ -37,6 +37,13 @@ backend. Inga byggverktyg krävs.
   kolumn (inte en specifik ruta) — brickan "faller" till den lägsta
   lediga raden i den kolumnen. Först med 4 i rad vågrätt, lodrätt eller
   diagonalt vinner; oavgjort om brädet blir fullt utan att någon vunnit.
+- **Dam** — enkel 8x8-variant ("amerikanska" regler): damer flyttar/
+  slår ett steg diagonalt åt valfritt håll (ingen flygande dam).
+  Slagtvång (måste slå om möjligt) och flerslag (samma bricka måste
+  fortsätta slå om den kan, UTOM om den precis krönts till dam — då
+  stannar den). Motståndaren förlorar om denne helt saknar lagliga drag
+  (inga brickor kvar ELLER blockerad) — inget forcerat oavgjort. Se
+  kommentaren högst upp i `js/games/checkers.js` för detaljer.
 
 Fler spel läggs till i `js/games/` — se "Lägga till ett nytt spel"
 nedan.
@@ -133,6 +140,7 @@ eller Pythons inbyggda server:
         backgammon.js         Backgammon: regler + eget bräde (renderBoard)
         battleship.js          Sänka skepp: regler + eget bräde (placering + strid, renderBoard)
         connectfour.js         4 i rad: regler + UI-hooks (rutnätsbräde, klick i kolumn -> droppar)
+        checkers.js             Dam: regler + eget bräde (renderBoard)
 
 ## Lägga till ett nytt spel
 

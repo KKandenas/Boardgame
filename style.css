@@ -544,6 +544,94 @@ h2 {
     box-shadow: 0 0 0 3px #ffffff, 0 2px 3px rgba(0, 0, 0, 0.45);
 }
 
+/* --- Dam: 8x8 rutmönster, bara mörka rutor spelbara. Rendereras helt av
+   js/games/checkers.js, inte av det generiska rutnätssystemet. Ärver
+   aspect-ratio:1/1 från .board (innehållet är redan kvadratiskt), men
+   MÅSTE byta display:grid -> block: annars placeras ck-grid (det enda
+   barnet) i EN kolumn av basens grid-template-columns:repeat(3,1fr) och
+   blir bara en tredjedel bred, precis som backgammon/sänka skepp av
+   samma anledning måste göra samma override. --- */
+.board--checkers {
+    display: block;
+}
+
+.ck-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 100%;
+    height: 100%;
+    border: 2px solid #2b1a10;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.ck-cell {
+    appearance: none;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    position: relative;
+}
+
+.ck-cell.light {
+    background: #e8d9b5;
+}
+
+.ck-cell.dark {
+    background: #6b4a2f;
+    cursor: pointer;
+}
+
+.ck-cell.dark:disabled {
+    cursor: default;
+}
+
+.ck-cell.selected {
+    box-shadow: inset 0 0 0 3px #fbbf24;
+}
+
+.ck-cell.hint::after {
+    content: "";
+    position: absolute;
+    width: 22%;
+    height: 22%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+/* Samma svart/vita brickfärger som backgammons bg-checker — mycket
+   större kontrast mot varandra och mot det bruna brädet än appens
+   vanliga turkos/rosa (samma lärdom som från 4 i rad). */
+.ck-piece {
+    width: 78%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+    font-size: 1rem;
+}
+
+.ck-piece.mark-x {
+    background: #0c0d10;
+    border: 1px solid #000;
+}
+
+.ck-piece.mark-o {
+    background: #fbfbf9;
+    border: 1px solid #b8b8ae;
+}
+
+.ck-piece.king {
+    color: #fbbf24;
+    box-shadow: 0 0 0 3px #fbbf24, 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
 /* --- Backgammon: 24 punkter i hästsko, bar i mitten, hem-bärning i
    högerkant. Rendereras helt av js/games/backgammon.js, inte av det
    generiska rutnätssystemet. --- */
