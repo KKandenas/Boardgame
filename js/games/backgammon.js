@@ -19,13 +19,22 @@
 // (bar, slå ut, hem-bärning exakt/övertal, dubbleringstärning,
 // gammon/backgammon) följer de riktiga reglerna.
 
-import { otherSymbolOf } from "./shared.js?v=28";
+import { otherSymbolOf } from "./shared.js?v=29";
 
 export const meta = {
     id: "backgammon",
     label: "Backgammon",
     description: "Klassiskt tärningsspel med dubbleringstärning och gammon-poäng.",
     boardClass: "board--backgammon",
+    rules: [
+        "Flytta dina 15 brickor runt brädet och bär av dem alla först för att vinna.",
+        "Slå tärningarna varje tur — du får flytta enligt båda värdena (samma bricka två gånger eller två olika brickor), eller fyra gånger samma värde om du slår par.",
+        "En punkt med 2 eller fler av motståndarens brickor är blockerad för dig. En punkt med exakt 1 motståndarbricka kan du slå ut — den hamnar på \"bar\" i mitten och måste komma in i spelet igen innan den brickan kan göra något annat.",
+        "Har du en egen bricka på bar måste du sätta in den igen innan du gör några andra drag.",
+        "När alla dina brickor är i din hemmaplan (de sista 6 punkterna) kan du börja bära av dem.",
+        "Dubbleringstärningen: du kan erbjuda att dubbla insatsen innan du slår tärning. Motståndaren accepterar (spelet fortsätter med dubbla poäng, och äger då kuben) eller ger upp ronden direkt till gamla insatsen.",
+        "Gammon ger dubbla poängen om motståndaren inte hunnit bära av en enda bricka när du vinner. Backgammon ger tredubbla poängen om motståndaren dessutom har en bricka kvar på bar eller i din hemmaplan.",
+    ],
 };
 
 const SIZE = 24;

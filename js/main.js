@@ -6,16 +6,17 @@ import {
     createRoom, joinRoom, makeMove, finishRound, markReadyForNext,
     cancelWaitingRoom, listenToOpenRooms,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=28";
+} from "./rooms.js?v=29";
 import {
     showScreen, renderLobby, renderGame, setError,
     renderProfileList, setCurrentProfileLabel, populateStatsFilters, renderStatsResults, renderOpenRooms,
-} from "./ui.js?v=28";
-import { getGame } from "./games/registry.js?v=28";
+    populateRulesGamePicker, renderRulesContent,
+} from "./ui.js?v=29";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=29";
 import {
     listProfiles, getOrCreateProfileByName, getStoredProfile, storeProfile, clearStoredProfile, fetchStatsLog,
-} from "./profiles.js?v=28";
-import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=28";
+} from "./profiles.js?v=29";
+import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=29";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
@@ -24,7 +25,7 @@ import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=2
 // i index.html, annars riskerar olika filer att cachas separat och hamna
 // i otakt — vilket var precis orsaken till att "rummet hittades inte"
 // kvarstod trots att fixen redan var pushad.
-export const APP_VERSION = "build 28 · 2026-08-04";
+export const APP_VERSION = "build 29 · 2026-08-04";
 
 let currentCode = null;
 let myPlayerId = null;
@@ -32,6 +33,8 @@ let myProfile = null;
 let pendingJoinCode = null; // ?code=-länk som väntar på att en profil väljs
 let unsubscribe = null;
 let latestOpenRooms = [];
+let rulesReturnScreen = "home";
+let lastRulesGameId = DEFAULT_GAME_ID;
 
 // Vilken rond (roundNumber) den här klienten redan försökt avsluta
 // (finishRound) — förhindrar att varje ny rendering av samma avslutade
@@ -367,6 +370,28 @@ document.getElementById("btn-stats-back").addEventListener("click", () => showSc
 document.getElementById("stats-game").addEventListener("change", renderStatsView);
 document.getElementById("stats-timeframe").addEventListener("change", renderStatsView);
 document.getElementById("stats-opponent").addEventListener("change", renderStatsView);
+
+// --- Regler --- Kan öppnas från hemskärmen (utan spelkontext — visar
+// senast tittade/förvalda spelet) eller direkt från ett pågående parti
+// (visar det spelet). "Tillbaka" går dit man kom ifrån i båda fallen.
+function openRules(gameId, returnScreen) {
+    rulesReturnScreen = returnScreen;
+    populateRulesGamePicker();
+    lastRulesGameId = gameId;
+    renderRulesContent(gameId);
+    showScreen("rules");
+}
+
+document.getElementById("btn-show-rules").addEventListener("click", () => openRules(lastRulesGameId, "home"));
+document.getElementById("btn-show-game-rules").addEventListener("click", () => {
+    if (!lastRoom) return;
+    openRules(lastRoom.gameId, "game");
+});
+document.getElementById("btn-rules-back").addEventListener("click", () => showScreen(rulesReturnScreen));
+document.getElementById("rules-game").addEventListener("change", (e) => {
+    lastRulesGameId = e.target.value;
+    renderRulesContent(lastRulesGameId);
+});
 
 // --- Start: läs ev. ?code= i länken, hoppa till profilval om ingen
 // profil är vald ännu, annars rakt till hemskärmen (nu med den öppna

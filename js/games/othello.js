@@ -7,7 +7,7 @@
 // alltid löses inom samma atomära skrivning som själva draget, utan
 // någon separat "auto-advance"-mekanism.
 
-import { otherSymbolOf } from "./shared.js?v=28";
+import { otherSymbolOf } from "./shared.js?v=29";
 
 export const meta = {
     id: "othello",
@@ -17,6 +17,12 @@ export const meta = {
     cols: 8,
     boardClass: "board--othello",
     showGlyph: false,
+    rules: [
+        "Lägg en bricka så att den fångar in en eller flera av motståndarens brickor i en rak linje (vågrätt, lodrätt eller diagonalt) mellan din nya bricka och en annan av dina egna brickor.",
+        "De infångade brickorna vänds till din färg.",
+        "Du måste göra ett drag som fångar minst en bricka om det går. Saknar du lagliga drag hoppar turen automatiskt över till motståndaren.",
+        "Ronden slutar när ingen av spelarna kan dra mer. Den med flest brickor på brädet vinner (oavgjort vid lika antal).",
+    ],
 };
 
 const SIZE = 8;

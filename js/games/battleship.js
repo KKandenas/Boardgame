@@ -11,13 +11,19 @@
 // Ren spellogik (inga sidoeffekter, inget DOM/Firebase) + renderBoard
 // (eget bräde — två hav, inte det generiska rutnätet).
 
-import { otherSymbolOf } from "./shared.js?v=28";
+import { otherSymbolOf } from "./shared.js?v=29";
 
 export const meta = {
     id: "battleship",
     label: "Sänka skepp",
     description: "Placera din flotta i hemlighet, sänk motståndarens skepp först.",
     boardClass: "board--battleship",
+    rules: [
+        "Placera din flotta i hemlighet på ditt eget hav: Hangarfartyg (5 rutor), Slagskepp (4), Kryssare (3), Ubåt (3) och Jagare (2). Placera manuellt eller tryck \"Slumpa\".",
+        "När båda spelarna är klara skjuter ni omväxlande mot varandras hav.",
+        "Turen går vidare efter varje skott, oavsett om du träffar eller missar.",
+        "Ett skepp är sänkt när alla dess rutor är träffade. Den som sänker hela motståndarens flotta först vinner ronden.",
+    ],
 };
 
 const GRID_SIZE = 10;

@@ -19,6 +19,11 @@ export const meta = {
     cols: 7,
     boardClass: "board--connectfour",
     showGlyph: false,
+    rules: [
+        "Klicka var som helst i en kolumn — brickan faller till den lägsta lediga raden i den kolumnen.",
+        "Först med 4 i rad vinner: vågrätt, lodrätt eller diagonalt.",
+        "Blir brädet fullt utan att någon fått 4 i rad blir det oavgjort.",
+    ],
 };
 
 const ROWS = 6;

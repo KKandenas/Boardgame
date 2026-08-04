@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" href="assets/icon.svg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="style.css?v=28">
+    <link rel="stylesheet" href="style.css?v=29">
 </head>
 <body>
     <div id="app">
@@ -65,7 +65,10 @@
                     <button type="submit" class="btn btn-secondary">Gå med</button>
                 </form>
 
-                <button id="btn-show-stats" class="btn btn-ghost home-stats-btn">Statistik</button>
+                <div class="home-footer-row">
+                    <button id="btn-show-rules" class="btn btn-ghost">Regler</button>
+                    <button id="btn-show-stats" class="btn btn-ghost">Statistik</button>
+                </div>
             </div>
         </section>
 
@@ -90,6 +93,7 @@
                 <div class="topbar">
                     <button id="btn-leave-game" class="icon-btn" aria-label="Lämna spelet">✕</button>
                     <div id="round-indicator" class="round-indicator">Runda 1</div>
+                    <button id="btn-show-game-rules" class="icon-btn" aria-label="Regler">?</button>
                 </div>
 
                 <div class="scorebar">
@@ -147,10 +151,24 @@
             </div>
         </section>
 
+        <section class="screen" id="screen-rules">
+            <div class="card">
+                <div class="topbar">
+                    <button id="btn-rules-back" class="icon-btn" aria-label="Tillbaka">✕</button>
+                    <h2>Regler</h2>
+                </div>
+                <label class="field">
+                    <span>Spel</span>
+                    <select id="rules-game"></select>
+                </label>
+                <div id="rules-content" class="rules-content"></div>
+            </div>
+        </section>
+
     </div>
 
     <div id="app-version" class="app-version"></div>
 
-    <script type="module" src="js/main.js?v=28"></script>
+    <script type="module" src="js/main.js?v=29"></script>
 </body>
 </html>

@@ -25,13 +25,20 @@
 //   ingen "flygande dam" och inget forcerat oavgjort vid upprepning/
 //   för många drag utan slag.
 
-import { otherSymbolOf } from "./shared.js?v=28";
+import { otherSymbolOf } from "./shared.js?v=29";
 
 export const meta = {
     id: "checkers",
     label: "Dam",
     description: "Klassisk 8x8-dam — slagtvång och flerslag, damer flyttar ett steg åt valfritt håll.",
     boardClass: "board--checkers",
+    rules: [
+        "Vanliga brickor flyttar ett steg diagonalt framåt till en tom ruta.",
+        "Kan du slå (hoppa över) en av motståndarens brickor MÅSTE du göra det. En vanlig bricka får slå åt alla fyra håll, även bakåt — det är bara vanlig flyttning utan slag som måste vara framåt.",
+        "Slår du en bricka och kan slå igen med samma bricka från din nya ruta måste du fortsätta slå.",
+        "En bricka som når motståndarens bortersta rad blir dam och kan därefter flytta och slå åt alla håll. En bricka som blir dam mitt i en slagsvit stannar där — den fortsätter inte slå förrän nästa tur.",
+        "Du vinner när motståndaren saknar lagliga drag — antingen för att alla dennes brickor är slagna, eller för att denne är helt blockerad.",
+    ],
 };
 
 const SIZE = 8;

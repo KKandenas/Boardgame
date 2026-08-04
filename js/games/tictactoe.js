@@ -9,7 +9,7 @@
 // (cellInteractable/onCellClick/statusText) som gör att ui.js/main.js
 // kan vara generiska över vilket spel som spelas.
 
-import { otherSymbolOf } from "./shared.js?v=28";
+import { otherSymbolOf } from "./shared.js?v=29";
 
 export const meta = {
     id: "tictactoe",
@@ -19,6 +19,12 @@ export const meta = {
     cols: 3,
     boardClass: "board--tictactoe",
     showGlyph: true,
+    rules: [
+        "Tre i rad vinner — vågrätt, lodrätt eller diagonalt.",
+        "Varje spelare har bara 3 brickor. Så länge du har färre än 3 ute placerar du en ny bricka på en tom ruta.",
+        "När alla dina 3 brickor är utplacerade flyttar du istället en av dem till en tom ruta varje tur: tryck på din bricka, sedan på rutan du vill flytta till.",
+        "Brädet blir aldrig fullt, så partiet fortsätter tills någon får tre i rad.",
+    ],
 };
 
 const WIN_LINES = [

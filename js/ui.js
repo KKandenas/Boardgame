@@ -4,8 +4,8 @@
 // här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
 // från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells } from "./games/shared.js?v=28";
-import { getGame, GAME_LIST } from "./games/registry.js?v=28";
+import { boardToCells } from "./games/shared.js?v=29";
+import { getGame, GAME_LIST } from "./games/registry.js?v=29";
 
 const screens = {
     profile: document.getElementById("screen-profile"),
@@ -13,6 +13,7 @@ const screens = {
     lobby: document.getElementById("screen-lobby"),
     game: document.getElementById("screen-game"),
     stats: document.getElementById("screen-stats"),
+    rules: document.getElementById("screen-rules"),
 };
 
 // Bakgrundsbilden (hundarna) visas bara på "startsidorna" — där man
@@ -271,6 +272,32 @@ export function populateStatsFilters(profiles, myProfileId) {
         opt.value = profile.id;
         opt.textContent = profile.name;
         oppSelect.appendChild(opt);
+    }
+}
+
+// --- Regler ---
+// Väljaren fylls en gång (samma spellista oavsett var skärmen öppnades
+// från) — vilket spel som visas väljs separat via renderRulesContent.
+export function populateRulesGamePicker() {
+    const select = document.getElementById("rules-game");
+    select.innerHTML = "";
+    for (const game of GAME_LIST) {
+        const opt = document.createElement("option");
+        opt.value = game.meta.id;
+        opt.textContent = game.meta.label;
+        select.appendChild(opt);
+    }
+}
+
+export function renderRulesContent(gameId) {
+    const game = getGame(gameId);
+    document.getElementById("rules-game").value = game.meta.id;
+    const container = document.getElementById("rules-content");
+    container.innerHTML = "";
+    for (const line of game.meta.rules || []) {
+        const p = document.createElement("p");
+        p.textContent = line;
+        container.appendChild(p);
     }
 }
 

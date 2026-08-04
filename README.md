@@ -91,6 +91,22 @@ DOM-/Firebase-anrop) genom att läsa hela `luffarschack/statsLog` — ett
 enkelt, litet dataset för en app som den här, så ingen databas-frågelogik
 behövs.
 
+## Regler
+
+Varje spelmodul exporterar `meta.rules` (en array med spelarvänliga
+textrader — inte samma sak som de mer implementationsinriktade
+kommentarerna högst upp i respektive fil). Regelskärmen (`#screen-rules`)
+kan nås på två sätt:
+
+- **Regler**-knappen på hemskärmen — spelväljare med alla spel, minns
+  senast valda spelet mellan öppningar.
+- **?**-knappen i spelskärmens topbar — öppnar direkt till det pågående
+  partiets regler (spelväljaren finns kvar om man vill kika på ett annat
+  spels regler också).
+
+"Tillbaka" (✕) går dit man kom ifrån (hemskärmen respektive spelet), inte
+alltid till hemskärmen.
+
 ## Köra spelet
 
 Spelet **måste** köras via en webbserver (http:// eller https://) — inte
