@@ -11,7 +11,7 @@
 // Ren spellogik (inga sidoeffekter, inget DOM/Firebase) + renderBoard
 // (eget bräde — två hav, inte det generiska rutnätet).
 
-import { otherSymbolOf } from "./shared.js?v=30";
+import { otherSymbolOf } from "./shared.js?v=31";
 
 export const meta = {
     id: "battleship",
@@ -29,11 +29,11 @@ export const meta = {
 const GRID_SIZE = 10;
 const CELL_COUNT = GRID_SIZE * GRID_SIZE;
 const SHIP_SPECS = [
-    { name: "Hangarfartyg", length: 5 },
-    { name: "Slagskepp", length: 4 },
-    { name: "Kryssare", length: 3 },
-    { name: "Ubåt", length: 3 },
-    { name: "Jagare", length: 2 },
+    { name: "Hangarfartyg", length: 5, img: "carrier" },
+    { name: "Slagskepp", length: 4, img: "battleship" },
+    { name: "Kryssare", length: 3, img: "cruiser" },
+    { name: "Ubåt", length: 3, img: "submarine" },
+    { name: "Jagare", length: 2, img: "destroyer" },
 ];
 
 export function createBoard() {
@@ -244,6 +244,87 @@ function buildGrid(container, extraClass) {
     return grid;
 }
 
+function shipOrientation(cells) {
+    const rows = cells.map((c) => Math.floor(c / GRID_SIZE));
+    return rows.every((r) => r === rows[0]) ? "h" : "v";
+}
+
+// Lägger skeppsbilder OVANPÅ rutnätet, positionerade via CSS grid-column/
+// -row-span (samma teknik som backgammons bar/hem-bärning) istället för
+// att höra till en enskild ruta — annars går det inte att visa EN
+// sammanhängande bild över flera rutor. `ships[i]` måste motsvara
+// SHIP_SPECS[i] (samma ordning hela vägen från draft/place-fleet).
+// `onlySunk`: används för MOTSTÅNDARENS hav — ett oskadat skepp får
+// aldrig avslöjas, men ett sänkt skepp är redan känt (alla dess rutor
+// är träffade) så det är rättvist att visa bilden där.
+function renderShipOverlays(grid, ships, { onlySunk = false } = {}) {
+    ships.forEach((ship, i) => {
+        if (!ship || !Array.isArray(ship.cells)) return;
+        if (onlySunk && !(ship.hits && ship.hits.every(Boolean))) return;
+        const spec = SHIP_SPECS[i];
+        if (!spec) return;
+
+        const cells = ship.cells;
+        const orientation = shipOrientation(cells);
+        const minRow = Math.min(...cells.map((c) => Math.floor(c / GRID_SIZE)));
+        const minCol = Math.min(...cells.map((c) => c % GRID_SIZE));
+
+        const wrap = document.createElement("div");
+        wrap.className = "ss-ship-overlay";
+        if (orientation === "h") {
+            wrap.style.gridColumn = `${minCol + 1} / span ${spec.length}`;
+            wrap.style.gridRow = `${minRow + 1} / span 1`;
+        } else {
+            wrap.style.gridColumn = `${minCol + 1} / span 1`;
+            wrap.style.gridRow = `${minRow + 1} / span ${spec.length}`;
+        }
+
+        const img = document.createElement("img");
+        img.className = "ss-ship-img";
+        img.src = `assets/ships/${spec.img}.png`;
+        img.alt = spec.name;
+        img.draggable = false;
+        wrap.appendChild(img);
+        grid.appendChild(wrap);
+
+        if (orientation === "v") {
+            // CSS kan inte uttrycka "min bredd = förälderns höjd" (procent
+            // löser sig alltid mot samma axel) — bilden är i grunden
+            // vågrät (samma fil som för ett liggande skepp), så för att
+            // rotera den 90° och ändå fylla den nu höga, smala rutan
+            // exakt måste bredd/höjd bytas till PIXELVÄRDEN från brädets
+            // faktiska renderade storlek, uppmätt precis efter att
+            // wrappern satts in (tvingar fram en synkron layout-läsning,
+            // men det är bara 5 skepp per bräde så kostnaden är obetydlig).
+            const rect = wrap.getBoundingClientRect();
+            img.style.width = `${rect.height}px`;
+            img.style.height = `${rect.width}px`;
+            img.classList.add("vertical");
+        }
+    });
+}
+
+// Ett eget, litet lager OVANPÅ skeppsbilderna för träff/miss-markörer —
+// annars skulle en fullstor skeppsbild dölja markören helt för alla
+// rutor inom sin egen sträcka (en bild som redan täcker HELA sin ruta
+// kan inte "synas igenom" av en bakgrundsfärg på cellen under den,
+// oavsett z-index på cellen själv: en pseudo-elements stapling begränsas
+// alltid av sin FÖRÄLDERS stapling relativt syskon, den kan aldrig
+// "hoppa över" ett syskon med högre z-index). Genom att lägga markören
+// som ett helt eget, senare element i samma rutnät (högre z-index, egen
+// grid-position) hamnar den garanterat överst oavsett vad som ligger
+// under den.
+function renderShotMarker(grid, cellIndex, status, sunk) {
+    const marker = document.createElement("div");
+    marker.className = `ss-shot-marker ${status}`;
+    marker.classList.toggle("sunk", !!sunk);
+    const row = Math.floor(cellIndex / GRID_SIZE);
+    const col = cellIndex % GRID_SIZE;
+    marker.style.gridColumn = String(col + 1);
+    marker.style.gridRow = String(row + 1);
+    grid.appendChild(marker);
+}
+
 function renderPlacementUI(container, ctx) {
     const { sendAction } = ctx;
     const wrap = document.createElement("div");
@@ -348,6 +429,10 @@ function renderPlacementUI(container, ctx) {
 
     container.innerHTML = "";
     container.appendChild(wrap);
+    // Måste ske EFTER att grid sitter i det LEVANDE dokumentet — annars
+    // ger getBoundingClientRect() (för lodräta skepp, se renderShipOverlays)
+    // bara nollor, eftersom ett frånkopplat element aldrig får en layout.
+    renderShipOverlays(grid, draft.ships);
 }
 
 function renderWaitingBoard(container, ships) {
@@ -372,6 +457,7 @@ function renderWaitingBoard(container, ships) {
 
     container.innerHTML = "";
     container.appendChild(wrap);
+    renderShipOverlays(grid, ships);
 }
 
 function renderBattleBoards(container, ctx) {
@@ -396,15 +482,6 @@ function renderBattleBoards(container, ctx) {
     for (let i = 0; i < CELL_COUNT; i++) {
         const cell = document.createElement("div");
         cell.className = "ss-cell";
-        if (myShipCells[i] !== undefined) cell.classList.add("ship");
-        const shot = otherShots[i];
-        if (shot === "hit") {
-            cell.classList.add("hit");
-            const ship = myShips[myShipCells[i]];
-            if (ship && ship.hits.every(Boolean)) cell.classList.add("sunk");
-        } else if (shot === "miss") {
-            cell.classList.add("miss");
-        }
         ownGrid.appendChild(cell);
     }
     wrap.appendChild(ownGrid);
@@ -420,13 +497,6 @@ function renderBattleBoards(container, ctx) {
         btn.type = "button";
         btn.className = "ss-cell";
         const shot = myShots[i];
-        if (shot === "hit") {
-            btn.classList.add("hit");
-            const ship = otherShips.find((s) => s.cells.includes(i));
-            if (ship && ship.hits.every(Boolean)) btn.classList.add("sunk");
-        } else if (shot === "miss") {
-            btn.classList.add("miss");
-        }
         const canFire = myTurn && shot === undefined && !round.winner;
         btn.disabled = !canFire;
         if (canFire) btn.addEventListener("click", () => sendAction({ type: "fire", cell: i }));
@@ -436,6 +506,32 @@ function renderBattleBoards(container, ctx) {
 
     container.innerHTML = "";
     container.appendChild(wrap);
+
+    // Skeppsbilder + träff/miss-markörer läggs EFTER att rutnäten sitter i
+    // det levande dokumentet (se motsvarande kommentar i renderPlacementUI)
+    // — egna havet visar ALLTID egna skepp, motståndarens hav visar bilder
+    // BARA för redan sänkta skepp (se renderShipOverlays).
+    renderShipOverlays(ownGrid, myShips);
+    renderShipOverlays(targetGrid, otherShips, { onlySunk: true });
+
+    for (let i = 0; i < CELL_COUNT; i++) {
+        const shot = otherShots[i];
+        if (shot === "hit") {
+            const ship = myShips[myShipCells[i]];
+            renderShotMarker(ownGrid, i, "hit", ship && ship.hits.every(Boolean));
+        } else if (shot === "miss") {
+            renderShotMarker(ownGrid, i, "miss", false);
+        }
+    }
+    for (let i = 0; i < CELL_COUNT; i++) {
+        const shot = myShots[i];
+        if (shot === "hit") {
+            const ship = otherShips.find((s) => s.cells.includes(i));
+            renderShotMarker(targetGrid, i, "hit", ship && ship.hits.every(Boolean));
+        } else if (shot === "miss") {
+            renderShotMarker(targetGrid, i, "miss", false);
+        }
+    }
 }
 
 export function renderBoard(container, ctx) {

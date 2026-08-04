@@ -1031,26 +1031,69 @@ h2 {
     border-color: #374151;
 }
 
-.ss-cell.miss::after {
-    content: "";
+/* Skeppsbilder: EN bild per skepp, spänd över de rutor (grid-column/-row
+   -span) skeppet upptar — se renderShipOverlays i battleship.js för
+   varför det inte går att göra det här per ruta. pointer-events:none så
+   att klick alltid går igenom till själva ruta-knappen under bilden
+   (viktigt för motståndarens hav, där man ska kunna skjuta på en ruta
+   som råkar visa ett redan sänkt skepp). */
+.ss-ship-overlay {
+    position: relative;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.ss-ship-img {
     position: absolute;
     top: 50%;
     left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+}
+
+/* Lodräta skepp: bredd/höjd sätts om till pixelvärden av JS (bytta mot
+   varandra) innan rotationen — se kommentaren i renderShipOverlays för
+   varför ren CSS (procent löser sig alltid mot samma axel) inte räcker. */
+.ss-ship-img.vertical {
+    transform: translate(-50%, -50%) rotate(90deg);
+}
+
+/* Eget lager OVANPÅ skeppsbilderna för träff/miss — en fullstor
+   skeppsbild skulle annars dölja en markör som bara ligger på den
+   underliggande rutan (se kommentaren vid renderShotMarker). */
+.ss-shot-marker {
+    position: relative;
+    pointer-events: none;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ss-shot-marker.miss::after {
+    content: "";
     width: 28%;
     height: 28%;
-    transform: translate(-50%, -50%);
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.ss-cell.hit {
+.ss-shot-marker.hit::after {
+    content: "";
+    width: 36%;
+    height: 36%;
+    border-radius: 50%;
     background: var(--danger);
-    border-color: #7f1d1d;
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.4), 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.ss-cell.hit.sunk {
-    background: #450a0a;
-    border-color: #000;
+.ss-shot-marker.hit.sunk::after {
+    background: #1a0000;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* --- Profilväljare --- */

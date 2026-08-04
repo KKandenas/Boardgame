@@ -27,12 +27,19 @@ backend. Inga byggverktyg krävs.
   att använda när läget är delvis blockerat — se kommentaren högst upp
   i `js/games/backgammon.js` för detaljer.
 - **Sänka skepp** — klassiska reglerna på ett 10x10-hav med fem skepp
-  (Hangarfartyg 5, Slagskepp 4, Kryssare 3, Ubåt 3, Jagare 2). Placera
-  flottan i hemlighet (manuellt eller med "Slumpa"), skjut sedan
-  omväxlande mot motståndarens hav — turen går alltid vidare efter ett
-  skott oavsett träff eller miss. Den som sänker hela motståndarflottan
-  först vinner ronden. Se "Kända begränsningar" nedan angående
-  flottans synlighet i databasen.
+  (Hangarfartyg 5, Slagskepp 4, Kryssare 3, Ubåt 3, Jagare 2), renderade
+  som riktiga skeppsbilder (`assets/ships/*.png`) istället för gråa
+  rutor — en bild per skeppstyp, spänd över de rutor skeppet upptar via
+  CSS grid-column/-row-span och roterad 90° för lodrät placering (se
+  `renderShipOverlays` i `js/games/battleship.js`). Placera flottan i
+  hemlighet (manuellt eller med "Slumpa"), skjut sedan omväxlande mot
+  motståndarens hav — turen går alltid vidare efter ett skott oavsett
+  träff eller miss. Motståndarens skepp förblir osynliga tills de är
+  helt sänkta, då avslöjas just DEN bilden (annars fortfarande bara
+  träff/miss-markörer). Den som sänker hela motståndarflottan först
+  vinner ronden. Se "Kända begränsningar" nedan angående flottans
+  synlighet i databasen (skiljt från UI-döljandet — appen visar aldrig
+  motståndarens oskadade skepp, men Firebase-datan är inte låst ner).
 - **4 i rad** — klassiskt 7x6-bräde. Man klickar var som helst i en
   kolumn (inte en specifik ruta) — brickan "faller" till den lägsta
   lediga raden i den kolumnen. Först med 4 i rad vågrätt, lodrätt eller
