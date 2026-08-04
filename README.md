@@ -223,14 +223,58 @@ redan generiskt.
   push, så att GitHub Pages/webbläsarens cache aldrig kan servera en
   äldre version av en enskild fil.
 
+## Firebase Security Rules
+
+`database.rules.json` i repo-roten är den PUBLICERADE (inte bara
+lokalt sparade) uppsättningen regler — Firebase Console → Realtime
+Database → Rules → klistra in hela filens innehåll → Publish. Filen
+här i repot är alltså bara dokumentation/källa tills någon faktiskt
+klistrar in den i konsolen; att committa den ändrar INGENTING i
+databasen automatiskt.
+
+Vad reglerna faktiskt gör:
+- `luffarschack/rooms/` — läsbart/skrivbart av alla, ingen
+  formvalidering. Rummets `round`/`board`-struktur skiljer sig helt åt
+  per spel (och ändras vid nästan varje drag), så att lägga till en
+  träffsäker `.validate` där vore både skört och riskerar att av
+  misstag blockera legitima drag — bedömdes inte vara värt risken.
+- `luffarschack/profiles/`, `luffarschack/statsLog/`,
+  `luffarschack/openRooms/` — läsbart av alla, men skrivbart bara EN
+  gång per nyckel (`!data.exists()`) plus en lätt formvalidering
+  (rätt fält finns, rimlig maxlängd på namn) — de här formen är
+  stabila och skrivs alltid som en komplett post i ett enda anrop, så
+  validering här är både enkel och riskfri.
+- Allt UTANFÖR `luffarschack/` (delas med ett annat spel i samma
+  Firebase-projekt) lämnas precis lika öppet som i Test Mode — den här
+  sessionen har ingen insyn i det andra spelets kod/databehov, så att
+  gissa oss till striktare regler där hade kunnat sabotera det appen.
+- Ingen rot-nivå-`.read` sätts längre (Test Mode hade `.read: true` på
+  hela databasen) — själva appen läser aldrig roten, så det här stänger
+  bara igen ett hål (dumpa HELA databasen, inklusive det andra spelet,
+  i en enda begäran) utan att påverka något som faktiskt används.
+
+**Det här är EXPLICIT, PERMANENT publicering av (i stort) samma öppna
+åtkomst Test Mode redan gav** — det löser Firebase-varningen om att
+Test Mode-reglerna slutar fungera efter 30 dagar, men lägger INTE till
+riktig åtkomstkontroll (ingen autentisering finns, se nedan). Reglerna
+behöver uppdateras om ett nytt toppnivå-fält läggs till under
+`luffarschack/` i framtiden, eller om formen på `profiles`/`statsLog`/
+`openRooms` ändras (nya obligatoriska fält) — annars nekas den
+skrivningen tyst.
+
 ## Kända begränsningar (medvetet inte åtgärdade ännu)
 
-- Firebase Security Rules är inte konfigurerade — rumsdatan är i
-  praktiken läsbar/skrivbar av alla klienter. Bör låsas ner innan
-  spelet används av folk du inte litar på. Detta är extra relevant för
-  **Sänka skepp**: appen döljer bara motståndarens flotta i UI:t, den
-  gömmer den inte på riktigt — en spelare som tittar i webbläsarens
-  nätverksflik kan i teorin se var motståndarens skepp ligger.
+- **Ingen autentisering finns** (matchar appens "inga konton"-
+  filosofi) — Firebase Security Rules kan begränsa VAR och i vilken
+  GROVA FORM data får skrivas, men kan aldrig verifiera VEM som
+  skriver utan någon form av inloggning (t.ex. Firebase Anonymous
+  Auth). All `luffarschack/`-data är alltså i praktiken fortfarande
+  läsbar/skrivbar av vem som helst med databas-URL:en — precis som
+  innan, fast nu permanent istället för att sluta fungera efter 30
+  dagar. Detta är extra relevant för **Sänka skepp**: appen döljer
+  bara motståndarens flotta i UI:t, den gömmer den inte på riktigt —
+  en spelare som tittar i webbläsarens nätverksflik kan i teorin se
+  var motståndarens skepp ligger.
 - **Profiler har varken lösenord eller PIN** — ett medvetet val (matchar
   appens "inga konton"-filosofi) men det betyder att vem som helst med
   tillgång till appen kan välja en befintlig profil (t.ex. "Kristian")
