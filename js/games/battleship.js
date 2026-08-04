@@ -11,7 +11,7 @@
 // Ren spellogik (inga sidoeffekter, inget DOM/Firebase) + renderBoard
 // (eget bräde — två hav, inte det generiska rutnätet).
 
-import { otherSymbolOf } from "./shared.js?v=31";
+import { otherSymbolOf } from "./shared.js?v=32";
 
 export const meta = {
     id: "battleship",
@@ -291,14 +291,16 @@ function renderShipOverlays(grid, ships, { onlySunk = false } = {}) {
             // CSS kan inte uttrycka "min bredd = förälderns höjd" (procent
             // löser sig alltid mot samma axel) — bilden är i grunden
             // vågrät (samma fil som för ett liggande skepp), så för att
-            // rotera den 90° och ändå fylla den nu höga, smala rutan
-            // exakt måste bredd/höjd bytas till PIXELVÄRDEN från brädets
-            // faktiska renderade storlek, uppmätt precis efter att
+            // rotera den 90° och fylla den nu höga, smala rutans FULLA
+            // längd måste bredden sättas om till ett PIXELVÄRDE från
+            // brädets faktiska renderade höjd, uppmätt precis efter att
             // wrappern satts in (tvingar fram en synkron layout-läsning,
             // men det är bara 5 skepp per bräde så kostnaden är obetydlig).
+            // Höjden lämnas till CSS:ens height:auto (samma proportionella
+            // "fyll alltid längden fullt, låt tjockleken följa bildens
+            // egna proportioner"-princip som vågräta skepp använder).
             const rect = wrap.getBoundingClientRect();
             img.style.width = `${rect.height}px`;
-            img.style.height = `${rect.width}px`;
             img.classList.add("vertical");
         }
     });
@@ -405,14 +407,11 @@ function renderPlacementUI(container, ctx) {
     }
 
     const grid = buildGrid(container, "ss-grid-own ss-grid-primary");
-    const cellsOccupied = {};
-    draft.ships.forEach((s, i) => { if (s) s.cells.forEach((c) => { cellsOccupied[c] = i; }); });
 
     for (let i = 0; i < CELL_COUNT; i++) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ss-cell";
-        if (cellsOccupied[i] !== undefined) btn.classList.add("ship");
         btn.addEventListener("click", () => {
             const shipIndex = draft.selected;
             if (draft.ships[shipIndex]) return; // redan placerad — välj den i listan för att flytta den
@@ -445,12 +444,9 @@ function renderWaitingBoard(container, ships) {
     wrap.appendChild(label);
 
     const grid = buildGrid(container, "ss-grid-own ss-grid-primary");
-    const occ = new Set();
-    ships.forEach((s) => s.cells.forEach((c) => occ.add(c)));
     for (let i = 0; i < CELL_COUNT; i++) {
         const cell = document.createElement("div");
         cell.className = "ss-cell";
-        if (occ.has(i)) cell.classList.add("ship");
         grid.appendChild(cell);
     }
     wrap.appendChild(grid);

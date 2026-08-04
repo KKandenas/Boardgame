@@ -1026,11 +1026,6 @@ h2 {
 
 .ss-cell:disabled { cursor: default; }
 
-.ss-cell.ship {
-    background: #4b5563;
-    border-color: #374151;
-}
-
 /* Skeppsbilder: EN bild per skepp, spänd över de rutor (grid-column/-row
    -span) skeppet upptar — se renderShipOverlays i battleship.js för
    varför det inte går att göra det här per ruta. pointer-events:none så
@@ -1043,20 +1038,36 @@ h2 {
     z-index: 2;
 }
 
+/* width:100% + height:auto (INTE height:100%+object-fit:contain) —
+   garanterar att bilden alltid täcker skeppets FULLA längd oavsett
+   bildens egna proportioner. En bild som är "kortare" än sin
+   cellsträcka (t.ex. hangarfartyget, ritat lite mer kompakt än 5:1)
+   skulle annars lämna en hel tom ruta vid ena änden när den bara
+   skalades för att få plats inom en fast höjd (object-fit:contain
+   krymper efter den TRÅNGASTE axeln, inte den som spelmässigt syns
+   mest på — skeppets längd). Höjden blir istället vad bildens egna
+   proportioner ger — ett långsmalt skepp (ubåt, kryssare) blir naturligt
+   smalare än sin ruta (helt förväntat), och det enda skeppet som är
+   "kortare" än sin mållängd (hangarfartyget) tillåts svälla en liten
+   bit utanför sin rad i höjdled istället — knappt märkbart, och långt
+   bättre än att tappa en hel ruta i längd.
+   */
 .ss-ship-img {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 100%;
-    height: 100%;
+    height: auto;
     transform: translate(-50%, -50%);
-    object-fit: contain;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
 }
 
-/* Lodräta skepp: bredd/höjd sätts om till pixelvärden av JS (bytta mot
-   varandra) innan rotationen — se kommentaren i renderShipOverlays för
-   varför ren CSS (procent löser sig alltid mot samma axel) inte räcker. */
+/* Lodräta skepp: bredden sätts om till ett pixelvärde av JS (brädets
+   faktiska renderade höjd för skeppets sträcka) innan rotationen — se
+   kommentaren i renderShipOverlays för varför ren CSS (procent löser
+   sig alltid mot samma axel) inte räcker. Höjden lämnas till
+   height:auto ovan (samma proportionella logik som vågräta skepp,
+   bara på den redan ombytta axeln).*/
 .ss-ship-img.vertical {
     transform: translate(-50%, -50%) rotate(90deg);
 }

@@ -9,7 +9,7 @@
 // (cellInteractable/onCellClick/statusText) som gör att ui.js/main.js
 // kan vara generiska över vilket spel som spelas.
 
-import { otherSymbolOf } from "./shared.js?v=31";
+import { otherSymbolOf } from "./shared.js?v=32";
 
 export const meta = {
     id: "tictactoe",
