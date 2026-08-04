@@ -2,10 +2,10 @@
 // till här; resten av appen (rooms.js/ui.js/main.js) är generisk över
 // vilket spel som spelas och pratar bara med den här filen.
 
-import * as tictactoe from "./tictactoe.js?v=24";
-import * as othello from "./othello.js?v=24";
-import * as backgammon from "./backgammon.js?v=24";
-import * as battleship from "./battleship.js?v=24";
+import * as tictactoe from "./tictactoe.js?v=25";
+import * as othello from "./othello.js?v=25";
+import * as backgammon from "./backgammon.js?v=25";
+import * as battleship from "./battleship.js?v=25";
 
 export const GAMES = {
     [tictactoe.meta.id]: tictactoe,

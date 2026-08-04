@@ -627,6 +627,15 @@ h2 {
     cursor: pointer;
     touch-action: manipulation;
     border-radius: 4px;
+    /* Grid-item har annars ett implicit min-width:auto (baserat på
+       innehållets minsta storlek) — utan detta tvingade den fasta
+       bricksstorleken nedan hela bar-kolumnen (0.55fr) att växa när en
+       bricka dök upp där, vilket knuffade om resten av brädet. Med
+       min-width:0 håller sig kolumnen vid sin tilldelade bredd oavsett
+       innehåll, och en bricka som råkar vara bredare än kolumnen får
+       bara synas utanför den (inget clip, inget overflow:hidden) i
+       stället för att ändra layouten. */
+    min-width: 0;
 }
 
 .bg-bar:disabled { cursor: default; }
@@ -636,13 +645,13 @@ h2 {
 /* Slagna brickor på bar syntes dåligt: bar-kolumnen är smalare än en
    vanlig punkt (0.55fr mot 1fr), så .bg-checkers 82%-av-stacken blev
    för liten där — och en svart bricka (nästan svart bakgrund/kant)
-   syntes knappt alls mot barens egen mörka bakgrund. Fast pixelstorlek
-   (större än på punkterna, eftersom bar-läget är viktigt att se) och
-   en ljus ring runt svart löser båda. */
+   syntes knappt alls mot barens egen mörka bakgrund. Fast pixelstorlek,
+   samma tak som vanliga punktbrickor (22px) så de inte blir större än
+   resten av brädet, samt en ljus ring runt svart löser båda. */
 .bg-bar .bg-checker {
-    width: 26px;
+    width: 22px;
     max-width: none;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
 }
 
 .bg-bar .bg-checker.mark-x {
