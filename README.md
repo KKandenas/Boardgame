@@ -51,6 +51,18 @@ backend. Inga byggverktyg krävs.
   stannar den). Motståndaren förlorar om denne helt saknar lagliga drag
   (inga brickor kvar ELLER blockerad) — inget forcerat oavgjort. Se
   kommentaren högst upp i `js/games/checkers.js` för detaljer.
+- **Go** (Baduk/Weiqi) — 9x9-bräde ("enkel" storlek), spelat på
+  linjeskärningspunkter istället för i rutor (renderas därför helt av
+  `js/games/go.js`, inte det generiska rutnätssystemet — en SVG för
+  linjenätet plus absolut positionerade klickpunkter). Placera stenar
+  växelvis; en sammanhängande grupp fångas och tas bort när den saknar
+  friheter (lediga punkter direkt intill). Enkel ko-regel (kan inte
+  omedelbart återta en nyss slagen ENSTAKA sten). Passar båda spelarna i
+  följd tar ronden slut direkt och räknas med area-poängräkning (egna
+  stenar + omringat territorium), plus 6,5 poäng i komi till Vit för att
+  Svart alltid börjar. Medvetna förenklingar (ingen manuell
+  "döda stenar"-förhandling, ingen fullständig positional superko) —
+  se kommentaren högst upp i `js/games/go.js` för detaljer.
 
 Fler spel läggs till i `js/games/` — se "Lägga till ett nytt spel"
 nedan.
@@ -164,6 +176,7 @@ eller Pythons inbyggda server:
         battleship.js          Sänka skepp: regler + eget bräde (placering + strid, renderBoard)
         connectfour.js         4 i rad: regler + UI-hooks (rutnätsbräde, klick i kolumn -> droppar)
         checkers.js             Dam: regler + eget bräde (renderBoard)
+        go.js                    Go: regler + eget bräde (linjeskärningspunkter, renderBoard)
 
 ## Lägga till ett nytt spel
 

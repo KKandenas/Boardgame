@@ -6,17 +6,17 @@ import {
     createRoom, joinRoom, makeMove, finishRound, markReadyForNext,
     cancelWaitingRoom, listenToOpenRooms,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=33";
+} from "./rooms.js?v=34";
 import {
     showScreen, renderLobby, renderGame, setError,
     renderProfileList, setCurrentProfileLabel, populateStatsFilters, renderStatsResults, renderOpenRooms,
     populateRulesGamePicker, renderRulesContent,
-} from "./ui.js?v=33";
-import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=33";
+} from "./ui.js?v=34";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=34";
 import {
     listProfiles, getOrCreateProfileByName, getStoredProfile, storeProfile, clearStoredProfile, fetchStatsLog,
-} from "./profiles.js?v=33";
-import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=33";
+} from "./profiles.js?v=34";
+import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=34";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
@@ -25,7 +25,7 @@ import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=3
 // i index.html, annars riskerar olika filer att cachas separat och hamna
 // i otakt — vilket var precis orsaken till att "rummet hittades inte"
 // kvarstod trots att fixen redan var pushad.
-export const APP_VERSION = "build 33 · 2026-08-04";
+export const APP_VERSION = "build 34 · 2026-08-04";
 
 let currentCode = null;
 let myPlayerId = null;

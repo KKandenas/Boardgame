@@ -662,6 +662,118 @@ h2 {
     box-shadow: 0 0 0 3px #fbbf24, 0 2px 3px rgba(0, 0, 0, 0.5);
 }
 
+/* --- Go: spelas på LINJESKÄRNINGAR, inte i rutor — rendereras helt av
+   js/games/go.js (absolut positionerade punkter + en SVG för linjenätet),
+   inte av det generiska rutnätssystemet. --- */
+.board--go {
+    display: block;
+    background: transparent;
+    aspect-ratio: auto;
+}
+
+.go-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.go-board {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: #dcb35c;
+    border: 1px solid #8a5a1f;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    /* Marginal så att kant-punkternas brickor/klickytor inte klipps av
+       brädets egna kanter (punkterna sitter på exakta procentsatser
+       0%–100%, dvs. precis i kanten för rad/kolumn 0 och 8). */
+    margin: 18px;
+    width: calc(100% - 36px);
+}
+
+.go-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.go-line {
+    stroke: #4a2f0f;
+    stroke-width: 0.035;
+}
+
+.go-hoshi {
+    fill: #4a2f0f;
+}
+
+.go-point {
+    appearance: none;
+    border: none;
+    padding: 0;
+    position: absolute;
+    width: 11%;
+    height: 11%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    background: transparent;
+    cursor: default;
+}
+
+.go-point:disabled {
+    cursor: default;
+}
+
+.go-point.hint {
+    cursor: pointer;
+}
+
+.go-point.hint::after {
+    content: "";
+    width: 34%;
+    height: 34%;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+/* Samma svart/vita stenfärger som backgammons/dams brickor. */
+.go-stone {
+    width: 92%;
+    height: 92%;
+    border-radius: 50%;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+.go-stone.mark-x {
+    background: #0c0d10;
+    border: 1px solid #000;
+}
+
+.go-stone.mark-o {
+    background: #fbfbf9;
+    border: 1px solid #b8b8ae;
+}
+
+.go-controls {
+    width: 100%;
+}
+
+.go-pass-btn {
+    width: 100%;
+}
+
+.go-result {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin: 0;
+}
+
 /* --- Backgammon: 24 punkter i hästsko, bar i mitten, hem-bärning i
    högerkant. Rendereras helt av js/games/backgammon.js, inte av det
    generiska rutnätssystemet. --- */
