@@ -353,9 +353,24 @@ h2 {
     color: var(--accent);
 }
 
-#chip-opp-symbol {
+/* Färgen följer den FAKTISKA symbolen (X/O), inte "mitt chip vs.
+   motståndarens chip" — annars visade chippet fel färg för den som
+   gick med som spelare 2. Standardfärgerna (turkos/rosa) är desamma
+   som förut, men olika spel kan skriva över dem nedan (t.ex. 4 i rad
+   med sina röd/gul-brickor) så att chippet matchar brädet. */
+.chip-symbol.mark-o {
     background: var(--o-dim);
     color: var(--o-color);
+}
+
+.game-connectfour .chip-symbol.mark-x {
+    background: rgba(220, 38, 38, 0.18);
+    color: #dc2626;
+}
+
+.game-connectfour .chip-symbol.mark-o {
+    background: rgba(250, 204, 21, 0.18);
+    color: #facc15;
 }
 
 .chip-name {
@@ -536,7 +551,7 @@ h2 {
    turkos/rosa (var(--accent)/var(--o-color)) — de var för lika varandra
    i luminans/mättnad för att snabbt skilja åt på ett litet 7x6-bräde. */
 .board--connectfour .cell.mark-x::after {
-    background: #ef4444;
+    background: #dc2626;
 }
 
 .board--connectfour .cell.mark-o::after {

@@ -4,8 +4,8 @@
 // här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
 // från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells } from "./games/shared.js?v=29";
-import { getGame, GAME_LIST } from "./games/registry.js?v=29";
+import { boardToCells } from "./games/shared.js?v=30";
+import { getGame, GAME_LIST } from "./games/registry.js?v=30";
 
 const screens = {
     profile: document.getElementById("screen-profile"),
@@ -91,13 +91,26 @@ export function renderGame(room, myPlayerId, selectedCell = null, callbacks = {}
 
     const meChip = document.getElementById("chip-me");
     const oppChip = document.getElementById("chip-opp");
+    const meSymbolEl = document.getElementById("chip-me-symbol");
+    const oppSymbolEl = document.getElementById("chip-opp-symbol");
     const symbolLabel = game.symbolLabel || ((s) => s);
     document.getElementById("chip-me-name").textContent = playerLabel(me, "Du");
-    document.getElementById("chip-me-symbol").textContent = symbolLabel(me.symbol);
+    meSymbolEl.textContent = symbolLabel(me.symbol);
     document.getElementById("chip-me-score").textContent = room.score?.[myPlayerId] ?? 0;
     document.getElementById("chip-opp-name").textContent = opp ? playerLabel(opp, "Motståndare") : "Väntar…";
-    document.getElementById("chip-opp-symbol").textContent = opp ? symbolLabel(opp.symbol) : "?";
+    oppSymbolEl.textContent = opp ? symbolLabel(opp.symbol) : "?";
     document.getElementById("chip-opp-score").textContent = oppId ? (room.score?.[oppId] ?? 0) : 0;
+
+    // Chippens färg följer den FAKTISKA symbolen (X/O) istället för att
+    // "mitt chip" alltid var tejpat till X:s färg — annars visade chippet
+    // fel färg för den som gick med som spelare 2 (symbol O). Samma
+    // mark-x/mark-o-klasser och (via .game-ID-scopet nedan) samma
+    // per-spel-färger som själva brädet använder, t.ex. röd/gul i 4 i rad.
+    meSymbolEl.classList.toggle("mark-x", me.symbol === "X");
+    meSymbolEl.classList.toggle("mark-o", me.symbol === "O");
+    oppSymbolEl.classList.toggle("mark-x", !!opp && opp.symbol === "X");
+    oppSymbolEl.classList.toggle("mark-o", !!opp && opp.symbol === "O");
+    document.getElementById("scorebar").className = `scorebar game-${game.meta.id}`;
 
     meChip.classList.toggle("active-turn", !round.winner && round.turn === myPlayerId);
     oppChip.classList.toggle("active-turn", !round.winner && !!oppId && round.turn === oppId);
