@@ -11,7 +11,7 @@
 // Ren spellogik (inga sidoeffekter, inget DOM/Firebase) + renderBoard
 // (eget bräde — två hav, inte det generiska rutnätet).
 
-import { otherSymbolOf } from "./shared.js?v=32";
+import { otherSymbolOf } from "./shared.js?v=33";
 
 export const meta = {
     id: "battleship",
@@ -244,6 +244,21 @@ function buildGrid(container, extraClass) {
     return grid;
 }
 
+// Ger en cell EXPLICIT grid-column/-row istället för att förlita sig på
+// CSS Grids auto-placering — annars "reserverar" skeppsöverlagren (som
+// alltid är explicit placerade, se renderShipOverlays) sina rutor INNAN
+// auto-placeringen hunnit lägga cellknapparna där, vilket tvingar undan
+// precis lika många celler till en HELT NY, extra rad längst ner (brädet
+// slutar inte längre se ut som 10x10). Genom att själva ge alla 100
+// celler samma explicita placering som skeppsöverlagren finns det
+// aldrig någon auto-placerad cell som kan bli undanträngd.
+function setCellGridPosition(el, cellIndex) {
+    const row = Math.floor(cellIndex / GRID_SIZE);
+    const col = cellIndex % GRID_SIZE;
+    el.style.gridColumn = String(col + 1);
+    el.style.gridRow = String(row + 1);
+}
+
 function shipOrientation(cells) {
     const rows = cells.map((c) => Math.floor(c / GRID_SIZE));
     return rows.every((r) => r === rows[0]) ? "h" : "v";
@@ -412,6 +427,7 @@ function renderPlacementUI(container, ctx) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ss-cell";
+        setCellGridPosition(btn, i);
         btn.addEventListener("click", () => {
             const shipIndex = draft.selected;
             if (draft.ships[shipIndex]) return; // redan placerad — välj den i listan för att flytta den
@@ -447,6 +463,7 @@ function renderWaitingBoard(container, ships) {
     for (let i = 0; i < CELL_COUNT; i++) {
         const cell = document.createElement("div");
         cell.className = "ss-cell";
+        setCellGridPosition(cell, i);
         grid.appendChild(cell);
     }
     wrap.appendChild(grid);
@@ -478,6 +495,7 @@ function renderBattleBoards(container, ctx) {
     for (let i = 0; i < CELL_COUNT; i++) {
         const cell = document.createElement("div");
         cell.className = "ss-cell";
+        setCellGridPosition(cell, i);
         ownGrid.appendChild(cell);
     }
     wrap.appendChild(ownGrid);
@@ -492,6 +510,7 @@ function renderBattleBoards(container, ctx) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ss-cell";
+        setCellGridPosition(btn, i);
         const shot = myShots[i];
         const canFire = myTurn && shot === undefined && !round.winner;
         btn.disabled = !canFire;
