@@ -517,12 +517,15 @@ h2 {
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
 }
 
+/* Klassiska röd/gul-brickorna används HÄR istället för appens vanliga
+   turkos/rosa (var(--accent)/var(--o-color)) — de var för lika varandra
+   i luminans/mättnad för att snabbt skilja åt på ett litet 7x6-bräde. */
 .board--connectfour .cell.mark-x::after {
-    background: var(--accent);
+    background: #ef4444;
 }
 
 .board--connectfour .cell.mark-o::after {
-    background: var(--o-color);
+    background: #facc15;
 }
 
 .board--connectfour .cell.hint::before {
@@ -534,9 +537,11 @@ h2 {
     background: rgba(255, 255, 255, 0.35);
 }
 
+/* Vit ring istället för det vanliga guld/gula (#fbbf24) — det skulle
+   knappt synas ovanpå den nu gula O-brickan. */
 .board--connectfour .cell.win.mark-x::after,
 .board--connectfour .cell.win.mark-o::after {
-    box-shadow: 0 0 0 3px #fbbf24, 0 2px 3px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 0 0 3px #ffffff, 0 2px 3px rgba(0, 0, 0, 0.45);
 }
 
 /* --- Backgammon: 24 punkter i hästsko, bar i mitten, hem-bärning i
