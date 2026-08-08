@@ -19,7 +19,7 @@
 // (bar, slå ut, hem-bärning exakt/övertal, dubbleringstärning,
 // gammon/backgammon) följer de riktiga reglerna.
 
-import { otherSymbolOf } from "./shared.js?v=41";
+import { otherSymbolOf } from "./shared.js?v=42";
 
 export const meta = {
     id: "backgammon",

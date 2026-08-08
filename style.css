@@ -991,10 +991,12 @@ h2 {
 
 /* Koordinatetiketter (bokstäver/siffror) i ramfälten — mörk text funkar
    mot BÅDA de nu opaka ramfärgerna (ljus turkos och vitt), ingen separat
-   bakgrundsplatta bakom varje bokstav behövs. */
+   bakgrundsplatta bakom varje bokstav behövs. font-size sätts INTE här —
+   CSS stöder inte enhetslösa font-size-värden som SVG-användarenheter
+   (till skillnad från fill/stroke-width); måste sättas som attribut
+   direkt på varje <text>-element i hex.js, se kommentaren där. */
 .hx-label {
     fill: #16171c;
-    font-size: 0.5; /* SVG-egen enhetslös längd = "användarenheter" (skalas med viewBox), INTE 0,5 CSS-pixlar */
     font-weight: 700;
     text-anchor: middle;
     dominant-baseline: central;
