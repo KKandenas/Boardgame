@@ -63,6 +63,20 @@ backend. Inga byggverktyg krävs.
   Svart alltid börjar. Medvetna förenklingar (ingen manuell
   "döda stenar"-förhandling, ingen fullständig positional superko) —
   se kommentaren högst upp i `js/games/go.js` för detaljer.
+- **Kvarn** (Nine Men's Morris/Mühle) — 24 punkter i tre hopkopplade
+  fyrkanter, spelat på punkter precis som Go (egen SVG + absolut
+  positionerade klickpunkter i `js/games/kvarn.js`, inte det generiska
+  rutnätssystemet). Varje spelare har 9 brickor: placeringsfas (en
+  bricka per tur på valfri ledig punkt) övergår i flyttfas (en bricka
+  längs en linje till en ledig angränsande punkt) när alla 9 är
+  utplacerade. Ner till 3 brickor kvar ger flygfas (valfri ledig punkt,
+  inte bara angränsande). Tre egna brickor i rad ("kvarn") ger rätt att
+  direkt ta bort en av motståndarens brickor — inte en som ingår i
+  dennes egen kvarn, om denne har någon bricka som inte gör det.
+  Vinner gör den vars motståndare har färre än 3 brickor kvar eller är
+  helt blockerad. Medvetna förenklingar (svängande kvarn tillåts
+  obegränsat, en dubbel-kvarn i samma drag ger ändå bara EN borttagen
+  bricka) — se kommentaren högst upp i `js/games/kvarn.js` för detaljer.
 
 Fler spel läggs till i `js/games/` — se "Lägga till ett nytt spel"
 nedan.
@@ -177,6 +191,7 @@ eller Pythons inbyggda server:
         connectfour.js         4 i rad: regler + UI-hooks (rutnätsbräde, klick i kolumn -> droppar)
         checkers.js             Dam: regler + eget bräde (renderBoard)
         go.js                    Go: regler + eget bräde (linjeskärningspunkter, renderBoard)
+        kvarn.js                  Kvarn: regler + eget bräde (linjeskärningspunkter, renderBoard)
 
 ## Lägga till ett nytt spel
 
