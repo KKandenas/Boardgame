@@ -92,6 +92,19 @@ backend. Inga byggverktyg krävs.
   — transponera den ursprungliga stenen (byt rad/kolumn) och ta över den
   som sin egen, en position som är exakt lika stark som draget var för
   Svart. Oavgjort kan matematiskt aldrig uppstå i Hex.
+- **Abalone** — riktig sexkant (61 rutor, rader om 5-6-7-8-9-8-7-6-5),
+  14 kulor per spelare i den klassiska startuppställningen. Egen rendering
+  i `js/games/abalone.js`: sexkantsrutor fyllda med kulans färg, samma
+  matematik som Hex (axiala hex-koordinater) men avgränsat till en RIKTIG
+  sexkant istället för en romb. Flytta 1-3 egna kulor i en rak rad —
+  sidledes kräver att alla destinationsrutor är lediga, längs radens egen
+  axel kan man putta en MINDRE motståndargrupp (2 mot 1, 3 mot 1, 3 mot 2)
+  om rutan bortom den är ledig eller utanför brädet. En kula som puttas av
+  kanten är permanent borta. Vinner gör den som puttar av 6 av
+  motståndarens kulor. Spelmotorns kärnfunktion (`tryMove`) delas mellan
+  den riktiga servervalideringen och UI:ts beräkning av vilka riktningar
+  som är lagliga just nu — se kommentaren högst upp i
+  `js/games/abalone.js` för detaljer.
 
 Fler spel läggs till i `js/games/` — se "Lägga till ett nytt spel"
 nedan.
@@ -208,6 +221,7 @@ eller Pythons inbyggda server:
         go.js                    Go: regler + eget bräde (linjeskärningspunkter, renderBoard)
         kvarn.js                  Kvarn: regler + eget bräde (linjeskärningspunkter, renderBoard)
         hex.js                     Hex: regler + eget bräde (sexkants-SVG, renderBoard)
+        abalone.js                  Abalone: regler + eget bräde (sexkants-SVG, renderBoard)
 
 ## Lägga till ett nytt spel
 

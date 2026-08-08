@@ -1025,6 +1025,78 @@ h2 {
     width: 100%;
 }
 
+/* --- Abalone: RIKTIG sexkant (61 rutor, 5-6-7-8-9-8-7-6-5), rendereras
+   som EN SVG av <polygon>-sexkantsrutor precis som hex.js (samma
+   matematik) men fyllda med kulans färg när upptagna, inga ramfält (se
+   filkommentaren i js/games/abalone.js — det finns inga "kanter man
+   bygger mot" i Abalone, bara SJÄLVA kanten man puttar av). --- */
+.board--abalone {
+    display: block;
+    background: transparent;
+    aspect-ratio: auto;
+}
+
+.ab-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.ab-board {
+    width: 100%;
+    height: auto;
+}
+
+.ab-cell {
+    fill: var(--surface-2);
+    stroke: var(--border);
+    stroke-width: 0.05;
+}
+
+.ab-cell.mark-x {
+    fill: #0c0d10;
+    stroke: #000;
+    stroke-width: 0.04;
+}
+
+.ab-cell.mark-o {
+    fill: #fbfbf9;
+    stroke: #b8b8ae;
+    stroke-width: 0.04;
+}
+
+/* Vald egen kula (bygger upp en rad om 1-3 innan man väljer riktning). */
+.ab-cell.selected {
+    stroke: #fbbf24;
+    stroke-width: 0.09;
+}
+
+/* Giltig riktning för den nuvarande markeringen — kan vara en tom ruta
+   (flytta hit) eller en motståndarkula (putta den, se .threat nedan). */
+.ab-cell.hint {
+    stroke: rgba(255, 255, 255, 0.55);
+    stroke-width: 0.08;
+    cursor: pointer;
+}
+
+/* Samma hint-ruta, men den innehåller en motståndarkula som skulle
+   puttas/fångas av det här draget — varningsfärg istället för den
+   neutrala hint-ringen, samma --danger som Kvarns borttagningsmål. */
+.ab-cell.hint.threat {
+    stroke: var(--danger);
+    stroke-width: 0.09;
+}
+
+.ab-cell.last-move {
+    stroke: var(--last-move);
+    stroke-width: 0.09;
+}
+
+.ab-info {
+    margin: 0;
+}
+
 /* --- Backgammon: 24 punkter i hästsko, bar i mitten, hem-bärning i
    högerkant. Rendereras helt av js/games/backgammon.js, inte av det
    generiska rutnätssystemet. --- */
