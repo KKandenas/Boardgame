@@ -19,7 +19,7 @@
 // (bar, slå ut, hem-bärning exakt/övertal, dubbleringstärning,
 // gammon/backgammon) följer de riktiga reglerna.
 
-import { otherSymbolOf } from "./shared.js?v=34";
+import { otherSymbolOf } from "./shared.js?v=35";
 
 export const meta = {
     id: "backgammon",
@@ -290,10 +290,13 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
         const d1 = 1 + Math.floor(Math.random() * 6);
         const d2 = 1 + Math.floor(Math.random() * 6);
         const dice = d1 === d2 ? [d1, d1, d1, d1] : [d1, d2];
+        // Ny tur, ny "senaste drag"-markering — nollställs här (INTE vid
+        // varje enskild move) så att markeringen kan samla ihop ALLA
+        // delflyttar från samma tur (upp till 4 vid par), se action "move".
         if (!hasAnyLegalMove(round.board, mySymbol, dice)) {
-            return { ...round, dice: null, turn: otherPlayerId };
+            return { ...round, dice: null, turn: otherPlayerId, lastMove: { cells: [] } };
         }
-        return { ...round, dice };
+        return { ...round, dice, lastMove: { cells: [] } };
     }
 
     if (action.type === "move") {
@@ -304,17 +307,22 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
 
         const board = applyMoveToBoard(round.board, mySymbol, from, to);
         const remainingDice = removeOne(round.dice, die);
+        // "off" är gemensam för båda färger som punktvärde — måste taggas
+        // med symbolen för att renderBoard ska veta VILKEN hem-bärningshög
+        // (offX/offO) som ska markeras.
+        const marker = to === "off" ? `off-${mySymbol}` : to;
+        const lastMove = { cells: [...new Set([...(round.lastMove?.cells || []), marker])] };
 
         if (board.off[mySymbol] === CHECKERS_PER_PLAYER) {
             const otherSymbol = otherSymbolOf(mySymbol);
             const pointValue = computeWinPoints(board, mySymbol, otherSymbol, round.cubeValue);
-            return { ...round, board, dice: [], winner: mySymbol, winLine: null, pointValue };
+            return { ...round, board, dice: [], winner: mySymbol, winLine: null, pointValue, lastMove };
         }
 
         if (remainingDice.length === 0 || !hasAnyLegalMove(board, mySymbol, remainingDice)) {
-            return { ...round, board, dice: null, turn: otherPlayerId };
+            return { ...round, board, dice: null, turn: otherPlayerId, lastMove };
         }
-        return { ...round, board, dice: remainingDice };
+        return { ...round, board, dice: remainingDice, lastMove };
     }
 
     return round;
@@ -382,6 +390,11 @@ export function renderBoard(container, ctx) {
         hintDestinations = legalDestinationsFrom(board, mySymbol, selectedCell, round.dice);
     }
     const hintSet = new Set(hintDestinations.map((d) => (d.to === "off" ? "off" : d.to)));
+    // Alla punkter (och ev. "off-X"/"off-O") som flyttats TILL under HELA
+    // motståndarens senaste tur — inte bara den allra sista delflytten,
+    // annars missar man 3 av 4 flyttar vid ett par-slag (se action "roll"/
+    // "move" i applyAction).
+    const lastMoveSet = new Set(round.lastMove?.cells || []);
 
     function attemptSelectOrMove(pointRef) {
         if (!canAct) return;
@@ -433,6 +446,7 @@ export function renderBoard(container, ctx) {
         renderCheckerStack(stack, p?.symbol, p?.count || 0);
         btn.classList.toggle("selected", selectedCell === idx);
         btn.classList.toggle("hint", hintSet.has(idx));
+        btn.classList.toggle("last-move", lastMoveSet.has(idx));
         btn.disabled = !canAct;
         btn.addEventListener("click", () => attemptSelectOrMove(idx));
     }
@@ -477,6 +491,7 @@ export function renderBoard(container, ctx) {
     renderCheckerStack(offOStack, "O", board.off.O);
     offO.appendChild(offOStack);
     offO.classList.toggle("hint", hintSet.has("off") && mySymbol === "O");
+    offO.classList.toggle("last-move", lastMoveSet.has("off-O"));
     offO.disabled = !canAct || mySymbol !== "O" || !hintSet.has("off");
     offO.addEventListener("click", () => attemptSelectOrMove("off"));
     grid.appendChild(offO);
@@ -491,6 +506,7 @@ export function renderBoard(container, ctx) {
     renderCheckerStack(offXStack, "X", board.off.X);
     offX.appendChild(offXStack);
     offX.classList.toggle("hint", hintSet.has("off") && mySymbol === "X");
+    offX.classList.toggle("last-move", lastMoveSet.has("off-X"));
     offX.disabled = !canAct || mySymbol !== "X" || !hintSet.has("off");
     offX.addEventListener("click", () => attemptSelectOrMove("off"));
     grid.appendChild(offX);

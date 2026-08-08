@@ -12,8 +12,8 @@
 // innan en ny rond startar (round.readyForNext) — se finishRound/
 // markReadyForNext nedan.
 
-import { paths, dbGet, dbSet, dbRemove, dbTransact, dbListen, dbPush, registerPresence } from "./firebase.js?v=34";
-import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=34";
+import { paths, dbGet, dbSet, dbRemove, dbTransact, dbListen, dbPush, registerPresence } from "./firebase.js?v=35";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=35";
 
 // Spel kan lägga till egna initiala fält på runde-nivå (t.ex. backgammons
 // dubbleringstärning) via en valfri game.initialRoundState()-hook.
@@ -27,6 +27,7 @@ function createRound(gameId, roundNumber, startingPlayerId) {
         startingPlayer: startingPlayerId,
         winner: null,
         winLine: null,
+        lastMove: null,
         pointValue: 1,
         scored: false,
         readyForNext: null,

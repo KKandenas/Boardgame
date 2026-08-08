@@ -20,7 +20,7 @@
 //   drag). Mer sällsynta, längre ko-cykler (t.ex. "trippel ko") stoppas
 //   inte, men är extremt ovanligt i vardagsspel.
 
-import { otherSymbolOf } from "./shared.js?v=34";
+import { otherSymbolOf } from "./shared.js?v=35";
 
 const SIZE = 9;
 const CELL_COUNT = SIZE * SIZE;
@@ -186,7 +186,10 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
         if (!Number.isInteger(cell) || cell < 0 || cell >= CELL_COUNT) return round;
         const result = simulatePlacement(round.board, cell, mySymbol);
         if (!result) return round; // ogiltigt drag (upptaget/ko/självmord)
-        return { ...round, board: result, passes: 0, turn: otherPlayerId };
+        // En passning rör round.lastMove INTE alls (se action "pass" ovan)
+        // — den ärver bara oförändrad via spreadet, vilket är avsiktligt:
+        // ingen sten flyttades, så den tidigare markeringen ska stå kvar.
+        return { ...round, board: result, passes: 0, turn: otherPlayerId, lastMove: { cells: [cell] } };
     }
 
     return round;
@@ -262,6 +265,8 @@ export function renderBoard(container, ctx) {
     }
     boardEl.appendChild(svg);
 
+    const lastMoveSet = new Set(round.lastMove?.cells || []);
+
     for (let row = 0; row < SIZE; row++) {
         for (let col = 0; col < SIZE; col++) {
             const cell = idx(row, col);
@@ -276,6 +281,7 @@ export function renderBoard(container, ctx) {
             if (stoneSymbol) {
                 const stone = document.createElement("div");
                 stone.className = `go-stone ${stoneSymbol === "X" ? "mark-x" : "mark-o"}`;
+                stone.classList.toggle("last-move", lastMoveSet.has(cell));
                 btn.appendChild(stone);
                 btn.disabled = true;
             } else {

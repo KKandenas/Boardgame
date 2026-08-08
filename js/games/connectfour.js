@@ -94,7 +94,14 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
     const winner = line ? mySymbol : (isBoardFull(board) ? "draw" : null);
     const winLine = line || null;
 
-    return { ...round, board, winner, winLine, turn: winner ? round.turn : otherPlayerId };
+    return {
+        ...round,
+        board,
+        winner,
+        winLine,
+        lastMove: { cells: [idx(row, col)] },
+        turn: winner ? round.turn : otherPlayerId,
+    };
 }
 
 // Bara landningsrutan (understa lediga raden) i en icke-full kolumn räknas

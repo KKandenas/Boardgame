@@ -7,7 +7,7 @@
 // alltid löses inom samma atomära skrivning som själva draget, utan
 // någon separat "auto-advance"-mekanism.
 
-import { otherSymbolOf } from "./shared.js?v=34";
+import { otherSymbolOf } from "./shared.js?v=35";
 
 export const meta = {
     id: "othello",
@@ -123,7 +123,12 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
     for (const flippedCell of flips) board[flippedCell] = mySymbol;
 
     const otherSymbol = otherSymbolOf(mySymbol);
-    return { ...round, board, ...resolveTurn(board, playerId, mySymbol, otherPlayerId, otherSymbol) };
+    return {
+        ...round,
+        board,
+        lastMove: { cells: [action.cell] },
+        ...resolveTurn(board, playerId, mySymbol, otherPlayerId, otherSymbol),
+    };
 }
 
 export function cellInteractable({ board, cellIndex, mySymbol, myTurn }) {
