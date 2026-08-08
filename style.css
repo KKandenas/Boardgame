@@ -793,6 +793,138 @@ h2 {
     margin: 0;
 }
 
+/* --- Kvarn: 24 punkter i tre hopkopplade fyrkanter, spelas på PUNKTER
+   precis som Go — rendereras helt av js/games/kvarn.js, inte av det
+   generiska rutnätssystemet. Ljus "papper/kartong"-ton istället för Go:s
+   träfärg så de två punktspelen syns tydligt isär på en snabb blick. --- */
+.board--kvarn {
+    display: block;
+    background: transparent;
+    aspect-ratio: auto;
+}
+
+.km-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.km-board {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: #d8d2c4;
+    border: 1px solid #8a8272;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    /* Samma marginal-knep som go-board — punkterna sitter på exakta
+       procentsatser 0%–100%, annars klipper brädets egen kant/rundning
+       bort halva klickytan på kant-/hörnpunkterna. */
+    margin: 18px;
+    width: calc(100% - 36px);
+}
+
+.km-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.km-line {
+    stroke: #3a362c;
+    stroke-width: 0.035;
+}
+
+.km-point {
+    appearance: none;
+    border: none;
+    padding: 0;
+    position: absolute;
+    /* 10% ryms gott och väl inom minsta avståndet mellan två grannpunkter
+       (1 av 6 rutnätsenheter ≈ 16,7%, t.ex. inre fyrkantens sidor) utan
+       att klickytorna för närliggande punkter överlappar varandra. */
+    width: 10%;
+    height: 10%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    background: transparent;
+    cursor: default;
+}
+
+.km-point:disabled {
+    cursor: default;
+}
+
+.km-point.hint {
+    cursor: pointer;
+}
+
+.km-point.hint::after {
+    content: "";
+    width: 40%;
+    height: 40%;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+/* Ring (INTE en fylld prick — den punkten är TOM, ingen bricka att sätta
+   ringen på) runt den punkt en bricka just togs bort från, så motståndaren
+   direkt ser VILKEN av sina brickor som försvann utan att behöva jämföra
+   brädet mentalt — se round.lastMove.removed i kvarn.js. */
+.km-point.last-removed::after {
+    content: "";
+    width: 55%;
+    height: 55%;
+    border-radius: 50%;
+    border: 2px solid var(--last-move);
+    box-sizing: border-box;
+}
+
+/* Samma svart/vita brickfärger som Go/Dam/Backgammon. */
+.km-piece {
+    width: 86%;
+    height: 86%;
+    border-radius: 50%;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+.km-piece.mark-x {
+    background: #0c0d10;
+    border: 1px solid #000;
+}
+
+.km-piece.mark-o {
+    background: #fbfbf9;
+    border: 1px solid #b8b8ae;
+}
+
+.km-piece.last-move {
+    box-shadow: 0 0 0 3px var(--last-move), 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Egen vald bricka i flyttfasen — samma guld som .selected i övriga spel. */
+.km-point.selected {
+    outline: 2px solid #fbbf24;
+    outline-offset: -2px;
+    border-radius: 50%;
+}
+
+/* En motståndarbricka som är ett lagligt mål att ta bort efter en kvarn
+   — varningsfärgen (samma --danger som Sänka skepps träffmarkör) skiljer
+   den tydligt från den vanliga guld/blå highlighten för egna drag. */
+.km-piece.removable {
+    box-shadow: 0 0 0 3px var(--danger), 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+.km-info {
+    margin: 0;
+}
+
 /* --- Backgammon: 24 punkter i hästsko, bar i mitten, hem-bärning i
    högerkant. Rendereras helt av js/games/backgammon.js, inte av det
    generiska rutnätssystemet. --- */
