@@ -20,7 +20,7 @@
 //   drag). Mer sällsynta, längre ko-cykler (t.ex. "trippel ko") stoppas
 //   inte, men är extremt ovanligt i vardagsspel.
 
-import { otherSymbolOf } from "./shared.js?v=35";
+import { otherSymbolOf } from "./shared.js?v=36";
 
 const SIZE = 9;
 const CELL_COUNT = SIZE * SIZE;
@@ -222,6 +222,23 @@ function renderResultPanel(wrap, round) {
     wrap.appendChild(p);
 }
 
+// Löpande ställning UNDER pågående rond (samma computeScore som
+// slutpoängen, bara omräknad live på varje rendering) — ersätts av den
+// riktiga slutresultatpanelen ovan så fort ronden får en vinnare, så de
+// två visas aldrig samtidigt. Tidigt i partiet räknas det mesta av
+// brädet som neutralt ("dame", se computeScore) eftersom en tom ruta
+// bara räknas som territorium när den uteslutande gränsar till EN färg
+// — ställningen fylls alltså på allteftersom gränserna blir tydliga,
+// det är förväntat (inte en bugg som gör att den ser "för låg" ut).
+function renderScorePanel(wrap, round) {
+    if (round.winner) return;
+    const { X, O } = computeScore(round.board);
+    const p = document.createElement("p");
+    p.className = "go-result";
+    p.textContent = `Ställning: Svart ${X} – Vitt ${O} (komi inräknad)`;
+    wrap.appendChild(p);
+}
+
 export function renderBoard(container, ctx) {
     const { round, mySymbol, myTurn, sendAction } = ctx;
     const board = round.board || { stones: {}, koPoint: null };
@@ -229,6 +246,8 @@ export function renderBoard(container, ctx) {
 
     const wrap = document.createElement("div");
     wrap.className = "go-wrap";
+
+    renderScorePanel(wrap, round);
 
     const boardEl = document.createElement("div");
     boardEl.className = "go-board";
