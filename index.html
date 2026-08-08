@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" href="assets/icon.svg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="style.css?v=44">
+    <link rel="stylesheet" href="style.css?v=45">
 </head>
 <body>
     <div id="app">
@@ -34,7 +34,13 @@
 
         <section class="screen" id="screen-home">
             <div class="card center">
-                <h1>Bordsspel</h1>
+                <div class="brand-row">
+                    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+                        <polygon points="16,2 28,9 28,23 16,30 4,23 4,9" fill="none" stroke="#5eead4" stroke-width="2"/>
+                        <circle cx="16" cy="16" r="4.5" fill="#5eead4"/>
+                    </svg>
+                    <h1>Bordsspel</h1>
+                </div>
                 <p class="subtitle">Brädspel mot en kompis — varsin mobil, i realtid.</p>
                 <p class="profile-chip">Spelar som <strong id="home-profile-name">–</strong> · <button type="button" id="btn-switch-profile" class="link-btn">byt profil</button></p>
 
@@ -44,17 +50,47 @@
                 </div>
 
                 <p class="section-label">Starta ett spel</p>
-                <div class="radio-row" id="start-game-picker">
-                    <button type="button" class="radio-chip" data-game-id="tictactoe">Luffarschack</button>
-                    <button type="button" class="radio-chip" data-game-id="othello">Othello</button>
-                    <button type="button" class="radio-chip" data-game-id="backgammon">Backgammon</button>
-                    <button type="button" class="radio-chip" data-game-id="battleship">Sänka skepp</button>
-                    <button type="button" class="radio-chip" data-game-id="connectfour">4 i rad</button>
-                    <button type="button" class="radio-chip" data-game-id="checkers">Dam</button>
-                    <button type="button" class="radio-chip" data-game-id="go">Go</button>
-                    <button type="button" class="radio-chip" data-game-id="kvarn">Kvarn</button>
-                    <button type="button" class="radio-chip" data-game-id="hex">Hex</button>
-                    <button type="button" class="radio-chip" data-game-id="abalone">Abalone</button>
+                <div class="game-picker" id="start-game-picker">
+                    <button type="button" class="game-card" data-game-id="tictactoe">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#20232f"/><path d="M18 8v32M30 8v32M8 18h32M8 30h32" stroke="#454a5c" stroke-width="2" stroke-linecap="round"/><path d="M11 11l6 6M17 11l-6 6" stroke="#5eead4" stroke-width="2.5" stroke-linecap="round"/><circle cx="37" cy="37" r="4.5" fill="none" stroke="#f472b6" stroke-width="2.5"/></svg></span>
+                        <span class="game-name">Luffarschack</span>
+                    </button>
+                    <button type="button" class="game-card" data-game-id="othello">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#14532d"/><circle cx="19" cy="19" r="6" fill="#16171c"/><circle cx="29" cy="19" r="6" fill="#f4f4f5"/><circle cx="19" cy="29" r="6" fill="#f4f4f5"/><circle cx="29" cy="29" r="6" fill="#16171c"/></svg></span>
+                        <span class="game-name">Othello</span>
+                    </button>
+                    <button type="button" class="game-card" data-game-id="backgammon">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#3a2a18"/><path d="M8 40 14 12 20 40Z" fill="#6b4a2c"/><path d="M20 40 26 12 32 40Z" fill="#4a3220"/><path d="M32 40 38 12 44 40Z" fill="#6b4a2c"/><circle cx="14" cy="35" r="4.5" fill="#0c0d10" stroke="#000"/><circle cx="14" cy="26" r="4.5" fill="#fbfbf9" stroke="#b8b8ae"/></svg></span>
+                        <span class="game-name">Backgammon</span>
+                    </button>
+                    <button type="button" class="game-card" data-game-id="battleship">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#123a63"/><path d="M8 8h32M8 18h32M8 28h32M8 38h32M8 8v32M18 8v32M28 8v32M38 8v32" stroke="#0a2038"/><rect x="10" y="21" width="26" height="6" rx="3" fill="#8fa8c2"/><circle cx="32" cy="14" r="4" fill="#f87171"/></svg></span>
+                        <span class="game-name">Sänka skepp</span>
+                    </button>
+                    <button type="button" class="game-card" data-game-id="connectfour">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#1e3a67"/><circle cx="14" cy="34" r="5" fill="#facc15"/><circle cx="14" cy="22" r="5" fill="#0b0c10"/><circle cx="24" cy="34" r="5" fill="#dc2626"/><circle cx="24" cy="22" r="5" fill="#dc2626"/><circle cx="34" cy="34" r="5" fill="#facc15"/><circle cx="34" cy="22" r="5" fill="#0b0c10"/></svg></span>
+                        <span class="game-name">4 i rad</span>
+                    </button>
+                    <button type="button" class="game-card" data-game-id="checkers">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#6b4a2f"/><rect x="8" y="8" width="10" height="10" fill="#e8d9b5"/><rect x="28" y="8" width="10" height="10" fill="#e8d9b5"/><rect x="18" y="18" width="10" height="10" fill="#e8d9b5"/><rect x="8" y="28" width="10" height="10" fill="#e8d9b5"/><rect x="28" y="28" width="10" height="10" fill="#e8d9b5"/><circle cx="23" cy="23" r="5.5" fill="#0c0d10" stroke="#000"/></svg></span>
+                        <span class="game-name">Dam</span>
+                    </button>
+                    <button type="button" class="game-card" data-game-id="go">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#dcb35c"/><path d="M8 18h32M8 30h32M18 8v32M30 8v32" stroke="#8a5a1f" stroke-width="1.5"/><circle cx="18" cy="18" r="6" fill="#0c0d10" stroke="#000"/><circle cx="30" cy="30" r="6" fill="#fbfbf9" stroke="#b8b8ae"/></svg></span>
+                        <span class="game-name">Go</span>
+                    </button>
+                    <button type="button" class="game-card" data-game-id="kvarn">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#d8d2c4"/><g stroke="#3a362c" stroke-width="1.5" fill="none"><rect x="7" y="7" width="34" height="34"/><rect x="14" y="14" width="20" height="20"/><rect x="21" y="21" width="6" height="6"/><path d="M24 7v14M24 27v14M7 24h14M27 24h14"/></g><circle cx="7" cy="24" r="3.2" fill="#0c0d10"/><circle cx="41" cy="24" r="3.2" fill="#fbfbf9" stroke="#b8b8ae"/></svg></span>
+                        <span class="game-name">Kvarn</span>
+                    </button>
+                    <button type="button" class="game-card" data-game-id="hex">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#1f2230"/><polygon points="24,6 31.79,10.5 31.79,19.5 24,24 16.21,19.5 16.21,10.5" fill="#5eead4"/><polygon points="16,20 23.79,24.5 23.79,33.5 16,38 8.21,33.5 8.21,24.5" fill="#0c0d10" stroke="#454a5c"/><polygon points="32,20 39.79,24.5 39.79,33.5 32,38 24.21,33.5 24.21,24.5" fill="#fbfbf9" stroke="#b8b8ae"/></svg></span>
+                        <span class="game-name">Hex</span>
+                    </button>
+                    <button type="button" class="game-card" data-game-id="abalone">
+                        <span class="game-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#1f2230"/><g fill="#2a2e3f"><polygon points="16,6 23.79,10.5 23.79,19.5 16,24 8.21,19.5 8.21,10.5"/><polygon points="32,6 39.79,10.5 39.79,19.5 32,24 24.21,19.5 24.21,10.5"/><polygon points="24,20 31.79,24.5 31.79,33.5 24,38 16.21,33.5 16.21,24.5"/></g><circle cx="16" cy="15" r="6" fill="#0c0d10" stroke="#6b6b74"/><circle cx="32" cy="15" r="6" fill="#fbfbf9" stroke="#b8b8ae"/><circle cx="24" cy="29" r="6" fill="#0c0d10" stroke="#6b6b74"/></svg></span>
+                        <span class="game-name">Abalone</span>
+                    </button>
                 </div>
                 <p class="error-text" id="home-error"></p>
 
@@ -173,6 +209,6 @@
 
     <div id="app-version" class="app-version"></div>
 
-    <script type="module" src="js/main.js?v=44"></script>
+    <script type="module" src="js/main.js?v=45"></script>
 </body>
 </html>

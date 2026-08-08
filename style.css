@@ -204,41 +204,73 @@ h2 {
     font-size: 1.3rem !important;
 }
 
-.radio-row {
+.brand-row {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.brand-mark {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+}
+
+.game-picker {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
 }
 
-.radio-row .radio-chip {
-    flex: 1 1 auto;
-    min-width: 5.5rem;
-}
-
-.radio-chip {
+.game-card {
     appearance: none;
-    flex: 1;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 0;
-    font-weight: 600;
+    border-radius: 14px;
+    padding: 12px 8px 10px;
     font-family: inherit;
-    font-size: 0.95rem;
-    color: var(--text-dim);
     cursor: pointer;
     touch-action: manipulation;
-    transition: transform 0.08s ease, opacity 0.15s ease;
+    transition: transform 0.08s ease, opacity 0.15s ease, border-color 0.15s ease;
 }
 
-.radio-chip:active {
-    transform: scale(0.97);
+.game-card:active {
+    transform: scale(0.96);
 }
 
-.radio-chip:disabled {
+.game-card:disabled {
     opacity: 0.5;
     cursor: default;
+}
+
+.game-card:hover:not(:disabled) {
+    border-color: var(--accent-dim);
+}
+
+.game-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.game-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.game-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
 }
 
 .error-text {
@@ -1632,7 +1664,10 @@ h2 {
 .section-label {
     text-align: left;
     color: var(--text-dim);
-    font-size: 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     margin: 22px 0 10px;
 }
 
