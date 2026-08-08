@@ -966,27 +966,32 @@ h2 {
 
 /* Ramfält — fyra färgade fält RUNT sexkantsrutnätet (samma standardlook
    som referens-Hexbräden) som visar vilken spelare som bygger mot vilken
-   kant: Svart (topp/botten) resp. Vitt (vänster/höger), samma turkos/
-   rosa som redan används för X/O på poängraden. Mycket tydligare än att
-   bara tona kant-rutorna själva (tidigare försök) utan att för den skull
-   se ut som en helt egen, konkurrerande brädfärg. */
+   kant: Svart (topp/botten) resp. Vitt (vänster/höger). HELT OPAKA
+   fyllningar (ingen fill-opacity) — en genomskinlig ton blandas annars med
+   appens nästan svarta sidbakgrund och blir i praktiken bara en mörk,
+   urvattnad klick som lätt läses som "svart" oavsett vilken färg den
+   egentligen var tänkt att vara (precis vad som hände med den tidigare,
+   halvgenomskinliga versionen). Vitt (O) är bokstavligen VITT — samma
+   färg som O:s egna stenar — så det aldrig kan förväxlas med "inget syns
+   här". Svart (X) kan INTE vara bokstavligen svart av samma anledning
+   (skulle försvinna mot bakgrunden igen) — appens vanliga turkosa
+   accentfärg (samma som X använder på poängraden) håller den tydligt
+   synlig ändå. */
 .hx-border {
     pointer-events: none;
 }
 
 .hx-border-x {
     fill: var(--accent);
-    fill-opacity: 0.55;
 }
 
 .hx-border-o {
-    fill: var(--o-color);
-    fill-opacity: 0.55;
+    fill: #fbfbf9;
 }
 
-/* Koordinatetiketter (bokstäver/siffror) i ramfälten — mörk text mot den
-   ljusa turkosa/rosa tonen ger tillräcklig kontrast utan att behöva en
-   separat bakgrundsplatta bakom varje bokstav. */
+/* Koordinatetiketter (bokstäver/siffror) i ramfälten — mörk text funkar
+   mot BÅDA de nu opaka ramfärgerna (ljus turkos och vitt), ingen separat
+   bakgrundsplatta bakom varje bokstav behövs. */
 .hx-label {
     fill: #16171c;
     font-size: 0.5; /* SVG-egen enhetslös längd = "användarenheter" (skalas med viewBox), INTE 0,5 CSS-pixlar */
