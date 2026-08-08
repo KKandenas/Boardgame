@@ -77,6 +77,18 @@ backend. Inga byggverktyg krävs.
   helt blockerad. Medvetna förenklingar (svängande kvarn tillåts
   obegränsat, en dubbel-kvarn i samma drag ger ändå bara EN borttagen
   bricka) — se kommentaren högst upp i `js/games/kvarn.js` för detaljer.
+- **Hex** — 9x9-romb av hopkopplade sexkanter (samma "enkel storlek på
+  mobil"-resonemang som Go, jämfört med tävlingsstorleken 11x11). Egen
+  rendering i `js/games/hex.js`: hela brädet är EN SVG med matematiskt
+  exakt placerade sexkants-`<polygon>`-element, inte procentuell
+  CSS-positionering som Go/Kvarn. Svart bygger en obruten kedja mellan
+  brädets övre och nedre kant, Vitt mellan vänster och höger kant — ren
+  placering, ingen fångst eller flytt, sexkantigt (6-vägs) grannskap.
+  Svap-regeln ("pie rule"): eftersom Svart annars har ett stort övertag
+  får Vitt, en gång, som svar på Svarts första drag, "byta sida" —
+  transponera den ursprungliga stenen (byt rad/kolumn) och ta över den
+  som sin egen, en position som är exakt lika stark som draget var för
+  Svart. Oavgjort kan matematiskt aldrig uppstå i Hex.
 
 Fler spel läggs till i `js/games/` — se "Lägga till ett nytt spel"
 nedan.
@@ -192,6 +204,7 @@ eller Pythons inbyggda server:
         checkers.js             Dam: regler + eget bräde (renderBoard)
         go.js                    Go: regler + eget bräde (linjeskärningspunkter, renderBoard)
         kvarn.js                  Kvarn: regler + eget bräde (linjeskärningspunkter, renderBoard)
+        hex.js                     Hex: regler + eget bräde (sexkants-SVG, renderBoard)
 
 ## Lägga till ett nytt spel
 

@@ -2,14 +2,15 @@
 // till här; resten av appen (rooms.js/ui.js/main.js) är generisk över
 // vilket spel som spelas och pratar bara med den här filen.
 
-import * as tictactoe from "./tictactoe.js?v=37";
-import * as othello from "./othello.js?v=37";
-import * as backgammon from "./backgammon.js?v=37";
-import * as battleship from "./battleship.js?v=37";
-import * as connectfour from "./connectfour.js?v=37";
-import * as checkers from "./checkers.js?v=37";
-import * as go from "./go.js?v=37";
-import * as kvarn from "./kvarn.js?v=37";
+import * as tictactoe from "./tictactoe.js?v=38";
+import * as othello from "./othello.js?v=38";
+import * as backgammon from "./backgammon.js?v=38";
+import * as battleship from "./battleship.js?v=38";
+import * as connectfour from "./connectfour.js?v=38";
+import * as checkers from "./checkers.js?v=38";
+import * as go from "./go.js?v=38";
+import * as kvarn from "./kvarn.js?v=38";
+import * as hex from "./hex.js?v=38";
 
 export const GAMES = {
     [tictactoe.meta.id]: tictactoe,
@@ -20,9 +21,10 @@ export const GAMES = {
     [checkers.meta.id]: checkers,
     [go.meta.id]: go,
     [kvarn.meta.id]: kvarn,
+    [hex.meta.id]: hex,
 };
 
-export const GAME_LIST = [tictactoe, othello, backgammon, battleship, connectfour, checkers, go, kvarn];
+export const GAME_LIST = [tictactoe, othello, backgammon, battleship, connectfour, checkers, go, kvarn, hex];
 
 export const DEFAULT_GAME_ID = tictactoe.meta.id;
 
