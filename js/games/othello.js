@@ -7,7 +7,7 @@
 // alltid löses inom samma atomära skrivning som själva draget, utan
 // någon separat "auto-advance"-mekanism.
 
-import { otherSymbolOf } from "./shared.js?v=41";
+import { otherSymbolOf } from "./shared.js?v=42";
 
 export const meta = {
     id: "othello",

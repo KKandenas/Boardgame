@@ -27,7 +27,7 @@
 // ursprungliga drag var för Svart. Bara giltigt en enda gång, precis
 // efter det allra första draget (round.board.stones har exakt 1 sten).
 
-import { otherSymbolOf } from "./shared.js?v=41";
+import { otherSymbolOf } from "./shared.js?v=42";
 
 const SIZE = 11;
 const CELL_COUNT = SIZE * SIZE;
@@ -307,6 +307,13 @@ export function renderBoard(container, ctx) {
         const text = document.createElementNS(svgNs, "text");
         text.setAttribute("x", label.x.toFixed(4));
         text.setAttribute("y", label.y.toFixed(4));
+        // font-size MÅSTE sättas som SVG-attribut, INTE via CSS — till
+        // skillnad från fill/stroke-width stöder CSS:ens font-size inte
+        // enhetslösa tal som "användarenheter" (osynkat med viewBox);
+        // ett sådant värde är ogiltig CSS och webbläsaren föll tyst
+        // tillbaka till standard 16px — jättebokstäver (>1 helt
+        // rutnätssteg) som målade över hela brädet, inklusive ramfälten.
+        text.setAttribute("font-size", "0.5");
         text.setAttribute("class", "hx-label");
         text.textContent = label.text;
         svg.appendChild(text);
