@@ -925,6 +925,81 @@ h2 {
     margin: 0;
 }
 
+/* --- Hex: romb av hopkopplade sexkanter, rendereras som EN SVG med
+   matematiskt exakt placerade <polygon>-element (INTE procentuell
+   CSS-positionering som Go/Kvarn) — se filkommentaren i js/games/hex.js.
+   Neutral bräde-/rutfärg (till skillnad från Go:s trä och Kvarns papper)
+   eftersom kantfärgningen (hx-edge-x/hx-edge-o) redan bär spelets egen
+   färgkod, ett tredje tema-tema hade bara konkurrerat om uppmärksamheten. --- */
+.board--hex {
+    display: block;
+    background: transparent;
+    aspect-ratio: auto;
+}
+
+.hx-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.hx-board {
+    width: 100%;
+    height: auto;
+}
+
+.hx-cell {
+    fill: var(--surface-2);
+    stroke: var(--border);
+    stroke-width: 0.05;
+    transition: fill 0.1s ease;
+}
+
+.hx-cell.clickable {
+    cursor: pointer;
+}
+
+.hx-cell.clickable:hover {
+    fill: var(--surface);
+}
+
+/* Kantfärgning — visar vilken spelare som "äger" respektive kant (Svart:
+   topp/botten, Vitt: vänster/höger), bara på LEDIGA rutor (se hx.js).
+   Kolumn-kanten (O) deklareras EFTER rad-kanten (X) så att hörnrutorna
+   (som matchar båda) konsekvent visar O:s färg — godtyckligt val, bara
+   kosmetiskt, påverkar aldrig spelbarheten. */
+.hx-cell.hx-edge-x {
+    stroke: var(--accent);
+    stroke-width: 0.07;
+}
+
+.hx-cell.hx-edge-o {
+    stroke: var(--o-color);
+    stroke-width: 0.07;
+}
+
+.hx-cell.mark-x {
+    fill: #0c0d10;
+    stroke: #000;
+    stroke-width: 0.04;
+}
+
+.hx-cell.mark-o {
+    fill: #fbfbf9;
+    stroke: #b8b8ae;
+    stroke-width: 0.04;
+}
+
+.hx-cell.last-move {
+    stroke: var(--last-move);
+    stroke-width: 0.09;
+}
+
+.hx-swap-btn {
+    width: 100%;
+}
+
 /* --- Backgammon: 24 punkter i hästsko, bar i mitten, hem-bärning i
    högerkant. Rendereras helt av js/games/backgammon.js, inte av det
    generiska rutnätssystemet. --- */
