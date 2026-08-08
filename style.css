@@ -1054,14 +1054,25 @@ h2 {
     stroke-width: 0.05;
 }
 
-.ab-cell.mark-x {
-    fill: #0c0d10;
-    stroke: #000;
-    stroke-width: 0.04;
+/* Kulorna själva är EGNA runda <circle>-element ovanpå rutorna (se
+   renderBoard i abalone.js) — inte rutans egen fyllnadsfärg. Radiella
+   gradienter (definierade en gång per rendering i <defs>, se ab-grad-x/
+   ab-grad-o) ger en glansig "kula"-känsla och löser samtidigt kontrasten
+   för svarta kulor mot det mörka brädet: en ren nästan-svart yta syns
+   knappt här (till skillnad från Go/Dam/Backgammon där samma färg ligger
+   mot ett LJUST träbräde), men en tydlig ljusgrå highlight gör det. */
+.ab-marble {
+    pointer-events: none;
 }
 
-.ab-cell.mark-o {
-    fill: #fbfbf9;
+.ab-marble.mark-x {
+    fill: url(#ab-grad-x);
+    stroke: #6b6b74;
+    stroke-width: 0.05;
+}
+
+.ab-marble.mark-o {
+    fill: url(#ab-grad-o);
     stroke: #b8b8ae;
     stroke-width: 0.04;
 }

@@ -22,13 +22,14 @@
 //
 // Koordinatsystem: axiala hex-koordinater (q, r) — samma matematik som
 // hex.js (spetsig-topp-sexkantsrutnät), men här avgränsat till en RIKTIG
-// sexkant (|q|,|r|,|q+r| <= 4, "radie" 4) istället för hex.js:s romb, och
-// kulorna FYLLER hela sexkantsrutor (som spelpjäser i celler) snarare än
-// att sitta på linjeskärningspunkter (Go/Kvarn) eller vara tomma rutor
-// man bara placerar i en gång (Hex). Se rendering-sektionen längst ner
-// för själva pixel-omvandlingen.
+// sexkant (|q|,|r|,|q+r| <= 4, "radie" 4) istället för hex.js:s romb.
+// Kulorna är EGNA runda element OVANPÅ sexkantsrutorna (spelpjäser i
+// celler, med en radiell gradient för glansig "kula"-känsla och tillräcklig
+// kontrast mot det mörka brädet) — inte punkter på linjeskärningar
+// (Go/Kvarn) och inte bara en engångsplacering i en tom ruta (Hex). Se
+// rendering-sektionen längst ner för själva pixel-omvandlingen.
 
-import { otherSymbolOf } from "./shared.js?v=43";
+import { otherSymbolOf } from "./shared.js?v=44";
 
 export const meta = {
     id: "abalone",
@@ -381,6 +382,26 @@ export function renderBoard(container, ctx) {
     svg.setAttribute("class", "ab-board");
     svg.style.aspectRatio = `${VIEW_W} / ${VIEW_H}`;
 
+    // Radiella gradienter för glansiga, RUNDA kulor (istället för att bara
+    // fylla hela sexkantsrutan med kulans platta färg) — en ljus highlight
+    // uppe till vänster som tonar ut mot kanten. Löser samtidigt kontrast-
+    // problemet för svarta kulor mot det mörka brädet: en ren nästan-svart
+    // yta (samma #0c0d10 som Go/Dam/Backgammon använder mot SINA ljusa
+    // träbräden) syns knappt mot Abalones egna mörka rutor, men en
+    // gradient med en tydlig ljusgrå highlight gör det.
+    const defs = document.createElementNS(svgNs, "defs");
+    defs.innerHTML = `
+        <radialGradient id="ab-grad-x" cx="35%" cy="30%" r="75%">
+            <stop offset="0%" stop-color="#4a4a54"/>
+            <stop offset="100%" stop-color="#0c0d10"/>
+        </radialGradient>
+        <radialGradient id="ab-grad-o" cx="35%" cy="30%" r="75%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#dcdcd6"/>
+        </radialGradient>
+    `;
+    svg.appendChild(defs);
+
     for (let cell = 0; cell < CELL_COUNT; cell++) {
         const { x, y } = CENTERS[cell];
         const poly = document.createElementNS(svgNs, "polygon");
@@ -390,8 +411,6 @@ export function renderBoard(container, ctx) {
         const symbol = marbles[cell];
         const hint = hintTargets.get(cell);
         const classes = ["ab-cell"];
-        if (symbol === "X") classes.push("mark-x");
-        else if (symbol === "O") classes.push("mark-o");
         if (selected.includes(cell)) classes.push("selected");
         if (lastMoveSet.has(cell)) classes.push("last-move");
         if (hint) classes.push("hint");
@@ -404,6 +423,19 @@ export function renderBoard(container, ctx) {
             poly.addEventListener("click", () => handleMarbleClick(cell));
         }
         svg.appendChild(poly);
+
+        // Kulan är ett EGET, runt element OVANPÅ rutan (inte rutans egen
+        // fyllnadsfärg) — pointer-events:none så att klick alltid går
+        // igenom till sexkanten under (samma teknik som t.ex. battleship.js
+        // skeppsbilder/markörer ovanpå sina egna celler).
+        if (symbol) {
+            const marble = document.createElementNS(svgNs, "circle");
+            marble.setAttribute("cx", x.toFixed(4));
+            marble.setAttribute("cy", y.toFixed(4));
+            marble.setAttribute("r", String(HEX_R * 0.78));
+            marble.setAttribute("class", `ab-marble ${symbol === "X" ? "mark-x" : "mark-o"}`);
+            svg.appendChild(marble);
+        }
     }
 
     wrap.appendChild(svg);
