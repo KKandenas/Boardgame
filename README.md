@@ -77,16 +77,18 @@ backend. Inga byggverktyg krävs.
   helt blockerad. Medvetna förenklingar (svängande kvarn tillåts
   obegränsat, en dubbel-kvarn i samma drag ger ändå bara EN borttagen
   bricka) — se kommentaren högst upp i `js/games/kvarn.js` för detaljer.
-- **Hex** — 9x9-romb av hopkopplade sexkanter (samma "enkel storlek på
-  mobil"-resonemang som Go, jämfört med tävlingsstorleken 11x11). Egen
-  rendering i `js/games/hex.js`: hela brädet är EN SVG med matematiskt
-  exakt placerade sexkants-`<polygon>`-element, inte procentuell
-  CSS-positionering som Go/Kvarn. Svart bygger en obruten kedja mellan
-  brädets övre och nedre kant, Vitt mellan vänster och höger kant — ren
-  placering, ingen fångst eller flytt, sexkantigt (6-vägs) grannskap.
-  Svap-regeln ("pie rule"): eftersom Svart annars har ett stort övertag
-  får Vitt, en gång, som svar på Svarts första drag, "byta sida" —
-  transponera den ursprungliga stenen (byt rad/kolumn) och ta över den
+- **Hex** — 11x11-romb av hopkopplade sexkanter (klassisk tävlingsstorlek).
+  Egen rendering i `js/games/hex.js`: hela brädet är EN SVG med
+  matematiskt exakt placerade sexkants-`<polygon>`-element, inte
+  procentuell CSS-positionering som Go/Kvarn. Svart bygger en obruten
+  kedja mellan brädets övre och nedre kant, Vitt mellan vänster och höger
+  kant — ren placering, ingen fångst eller flytt, sexkantigt (6-vägs)
+  grannskap. De fyra kantraderna/-kolumnerna tonas i respektive spelares
+  färg (samma turkos/rosa som poängraden) så det syns tydligt åt vilket
+  håll var och en bygger, utan att lägga till en extra ram utanför själva
+  brädet. Svap-regeln ("pie rule"): eftersom Svart annars har ett stort
+  övertag får Vitt, en gång, som svar på Svarts första drag, "byta sida"
+  — transponera den ursprungliga stenen (byt rad/kolumn) och ta över den
   som sin egen, en position som är exakt lika stark som draget var för
   Svart. Oavgjort kan matematiskt aldrig uppstå i Hex.
 

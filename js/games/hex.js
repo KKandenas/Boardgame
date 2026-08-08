@@ -1,7 +1,6 @@
 // hex.js — Hex, klassiska förbindelsespelet på ett rombiskt sexkantsbräde.
-// 9x9 ("enkel" storlek, samma resonemang som Go: betydligt mer hanterbart
-// på mobil än tävlingsstorleken 11x11 eller större), spelat med samma
-// X/O-symboler som resten av appen (X = svart, börjar alltid; O = vit).
+// 11x11 (klassisk tävlingsstorlek), spelat med samma X/O-symboler som
+// resten av appen (X = svart, börjar alltid; O = vit).
 //
 // Regler: Svart (X) bygger en obruten kedja av egna stenar mellan den
 // ÖVRE och NEDRE kanten. Vitt (O) bygger en obruten kedja mellan den
@@ -28,9 +27,9 @@
 // ursprungliga drag var för Svart. Bara giltigt en enda gång, precis
 // efter det allra första draget (round.board.stones har exakt 1 sten).
 
-import { otherSymbolOf } from "./shared.js?v=38";
+import { otherSymbolOf } from "./shared.js?v=39";
 
-const SIZE = 9;
+const SIZE = 11;
 const CELL_COUNT = SIZE * SIZE;
 
 export const meta = {

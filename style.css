@@ -966,17 +966,41 @@ h2 {
 
 /* Kantfärgning — visar vilken spelare som "äger" respektive kant (Svart:
    topp/botten, Vitt: vänster/höger), bara på LEDIGA rutor (se hx.js).
+   FYLLNING (inte bara kontur) så det syns tydligt på håll vilket håll
+   respektive spelare bygger mot, UTAN att lägga till en extra "ram"
+   utanför själva spelbrädet — bara de befintliga kant-sexkanterna tonas
+   i spelarens egen färg (samma turkos/rosa som redan används för X/O på
+   poängraden). fill-opacity håller tonen såpass svag att den aldrig kan
+   förväxlas med en riktig sten (nästan svart/vit, se mark-x/mark-o).
    Kolumn-kanten (O) deklareras EFTER rad-kanten (X) så att hörnrutorna
    (som matchar båda) konsekvent visar O:s färg — godtyckligt val, bara
    kosmetiskt, påverkar aldrig spelbarheten. */
 .hx-cell.hx-edge-x {
+    fill: var(--accent);
+    fill-opacity: 0.3;
     stroke: var(--accent);
-    stroke-width: 0.07;
+    stroke-width: 0.05;
 }
 
 .hx-cell.hx-edge-o {
+    fill: var(--o-color);
+    fill-opacity: 0.3;
     stroke: var(--o-color);
-    stroke-width: 0.07;
+    stroke-width: 0.05;
+}
+
+/* Utan de här skulle .hx-cell.clickable:hover (högre specificitet — 2
+   klasser+pseudo mot kantreglernas 2 klasser) tillfälligt SLÄCKA
+   kanttoningen medan man hovrar just den rutan. Behåller färgen (lite
+   starkare, som hover-respons) istället för att den ska försvinna. */
+.hx-cell.hx-edge-x.clickable:hover {
+    fill: var(--accent);
+    fill-opacity: 0.45;
+}
+
+.hx-cell.hx-edge-o.clickable:hover {
+    fill: var(--o-color);
+    fill-opacity: 0.45;
 }
 
 .hx-cell.mark-x {
