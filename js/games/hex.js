@@ -27,7 +27,7 @@
 // ursprungliga drag var för Svart. Bara giltigt en enda gång, precis
 // efter det allra första draget (round.board.stones har exakt 1 sten).
 
-import { otherSymbolOf } from "./shared.js?v=39";
+import { otherSymbolOf } from "./shared.js?v=40";
 
 const SIZE = 11;
 const CELL_COUNT = SIZE * SIZE;
@@ -165,6 +165,17 @@ export function statusText({ round, myTurn, mySymbol }) {
 // hand. Se COL_SPACING/ROW_SHIFT/ROW_SPACING nedan för den geometriska
 // härledningen (standardformler för "spetsig topp"-sexkantsrutnät med
 // enhetlig radförskjutning, cirkumradie = 1).
+//
+// Ramfält (istället för att tona de faktiska rutorna): fyra färgade
+// parallellogram RUNT sexkantsrutnätet (samma standardlook som
+// referens-Hexbräden, t.ex. Wikipedias diagram) — mycket tydligare vilket
+// håll respektive spelare bygger mot än en svag tonad ruta. Topp-/
+// bottenfältet (Svart) är rena rektanglar eftersom rad 0 och rad SIZE-1
+// själva är horisontella linjer (bara kolumnen varierar). Vänster-/
+// högerfältet (Vitt) är exakt räta paralleller (INTE en approximation)
+// eftersom kolumn 0 och kolumn SIZE-1:s y-koordinater är en ren linjär
+// funktion av raden — ingen zigzag-spårning av enskilda sexkantshörn
+// behövs för att få kanterna exakta.
 // ============================================================
 
 const HEX_R = 1;
@@ -178,15 +189,13 @@ function cellCenter(row, col) {
     return { x: col * COL_SPACING + row * ROW_SHIFT, y: row * ROW_SPACING };
 }
 
-// Brädets fulla utbredning i SVG-koordinater — rad 0/kolumn 0 sitter i
-// origo, sista raden/kolumnen förskjuts både av sin egen kolumnposition
+// Sexkantsrutnätets utbredning i SVG-koordinater — rad 0/kolumn 0 sitter
+// i origo, sista raden/kolumnen förskjuts både av sin egen kolumnposition
 // OCH av alla föregående raders ackumulerade förskjutning.
-const VIEW_MIN_X = -HALF_W;
-const VIEW_MIN_Y = -HALF_H;
-const VIEW_MAX_X = (SIZE - 1) * (COL_SPACING + ROW_SHIFT) + HALF_W;
-const VIEW_MAX_Y = (SIZE - 1) * ROW_SPACING + HALF_H;
-const VIEW_W = VIEW_MAX_X - VIEW_MIN_X;
-const VIEW_H = VIEW_MAX_Y - VIEW_MIN_Y;
+const GRID_MIN_X = -HALF_W;
+const GRID_MIN_Y = -HALF_H;
+const GRID_MAX_X = (SIZE - 1) * (COL_SPACING + ROW_SHIFT) + HALF_W;
+const GRID_MAX_Y = (SIZE - 1) * ROW_SPACING + HALF_H;
 
 // Sex hörn för en "spetsig topp"-sexkant (spets rakt upp/ner, platta
 // sidor vänster/höger) — start rakt upp (-90°) och var 60:e grad runt.
@@ -195,6 +204,60 @@ const HEX_ANGLES = [-90, -30, 30, 90, 150, 210].map((deg) => (deg * Math.PI) / 1
 function hexPoints(cx, cy, r) {
     return HEX_ANGLES.map((a) => `${(cx + r * Math.cos(a)).toFixed(4)},${(cy + r * Math.sin(a)).toFixed(4)}`).join(" ");
 }
+
+// --- Ramfält runt rutnätet ---
+const BORDER_THICKNESS = HEX_R * 0.85;
+
+const GRID_TL = { x: GRID_MIN_X, y: GRID_MIN_Y };
+const GRID_TR = { x: (SIZE - 1) * COL_SPACING + HALF_W, y: GRID_MIN_Y };
+const GRID_BL = { x: (SIZE - 1) * ROW_SHIFT - HALF_W, y: GRID_MAX_Y };
+const GRID_BR = { x: GRID_MAX_X, y: GRID_MAX_Y };
+
+function polyPointsFrom(points) {
+    return points.map((p) => `${p.x.toFixed(4)},${p.y.toFixed(4)}`).join(" ");
+}
+
+// Topp/botten (Svarts mål) — rena rektanglar rakt utåt (uppåt/nedåt),
+// eftersom rad 0/rad SIZE-1 redan är horisontella linjer.
+const BORDER_TOP = [GRID_TL, GRID_TR, { x: GRID_TR.x, y: GRID_TR.y - BORDER_THICKNESS }, { x: GRID_TL.x, y: GRID_TL.y - BORDER_THICKNESS }];
+const BORDER_BOTTOM = [GRID_BL, GRID_BR, { x: GRID_BR.x, y: GRID_BR.y + BORDER_THICKNESS }, { x: GRID_BL.x, y: GRID_BL.y + BORDER_THICKNESS }];
+// Vänster/höger (Vitts mål) — förskjuts rakt åt sidan (vänster/höger).
+const BORDER_LEFT = [GRID_TL, GRID_BL, { x: GRID_BL.x - BORDER_THICKNESS, y: GRID_BL.y }, { x: GRID_TL.x - BORDER_THICKNESS, y: GRID_TL.y }];
+const BORDER_RIGHT = [GRID_TR, GRID_BR, { x: GRID_BR.x + BORDER_THICKNESS, y: GRID_BR.y }, { x: GRID_TR.x + BORDER_THICKNESS, y: GRID_TR.y }];
+
+// Brädets FULLA utbredning (rutnät + ramfält runt om) — det här är vad
+// viewBox faktiskt behöver täcka.
+const VIEW_MIN_X = GRID_MIN_X - BORDER_THICKNESS;
+const VIEW_MIN_Y = GRID_MIN_Y - BORDER_THICKNESS;
+const VIEW_MAX_X = GRID_MAX_X + BORDER_THICKNESS;
+const VIEW_MAX_Y = GRID_MAX_Y + BORDER_THICKNESS;
+const VIEW_W = VIEW_MAX_X - VIEW_MIN_X;
+const VIEW_H = VIEW_MAX_Y - VIEW_MIN_Y;
+
+// Koordinatetiketter (bokstäver A-K uppe/nere, siffror 1-11 vänster/
+// höger) — placerade mitt i respektive ramfält, förskjutna i samma
+// linjeriktning som fältet de sitter i (annars hamnar de fel i förhållande
+// till brädets lutning). Bara en synlig touch, ingen spelmekanik.
+function colLabel(i) { return String.fromCharCode(65 + i); } // A, B, C…
+function rowLabel(i) { return String(i + 1); }
+
+function buildLabels() {
+    const labels = [];
+    for (let col = 0; col < SIZE; col++) {
+        const top = cellCenter(0, col);
+        const bottom = cellCenter(SIZE - 1, col);
+        labels.push({ x: top.x, y: GRID_MIN_Y - BORDER_THICKNESS / 2, text: colLabel(col) });
+        labels.push({ x: bottom.x, y: GRID_MAX_Y + BORDER_THICKNESS / 2, text: colLabel(col) });
+    }
+    for (let row = 0; row < SIZE; row++) {
+        const left = cellCenter(row, 0);
+        const right = cellCenter(row, SIZE - 1);
+        labels.push({ x: left.x - HALF_W - BORDER_THICKNESS / 2, y: left.y, text: rowLabel(row) });
+        labels.push({ x: right.x + HALF_W + BORDER_THICKNESS / 2, y: right.y, text: rowLabel(row) });
+    }
+    return labels;
+}
+const BOARD_LABELS = buildLabels();
 
 export function renderBoard(container, ctx) {
     const { round, mySymbol, myTurn, sendAction } = ctx;
@@ -216,6 +279,39 @@ export function renderBoard(container, ctx) {
     // pixelbredd för lodräta skepp, fast här räknat rent matematiskt.
     svg.style.aspectRatio = `${VIEW_W} / ${VIEW_H}`;
 
+    // Ramfälten ritas FÖRST (underst i DOM-ordning) så sexkantsrutnätet
+    // alltid ligger ovanpå dem — de överlappar en aning i hörnen (se
+    // filkommentaren vid BORDER_TOP/BORDER_LEFT), vilket bara syns om man
+    // tittar noga precis i hörnet, aldrig över själva spelytan.
+    const borderTop = document.createElementNS(svgNs, "polygon");
+    borderTop.setAttribute("points", polyPointsFrom(BORDER_TOP));
+    borderTop.setAttribute("class", "hx-border hx-border-x");
+    svg.appendChild(borderTop);
+
+    const borderBottom = document.createElementNS(svgNs, "polygon");
+    borderBottom.setAttribute("points", polyPointsFrom(BORDER_BOTTOM));
+    borderBottom.setAttribute("class", "hx-border hx-border-x");
+    svg.appendChild(borderBottom);
+
+    const borderLeft = document.createElementNS(svgNs, "polygon");
+    borderLeft.setAttribute("points", polyPointsFrom(BORDER_LEFT));
+    borderLeft.setAttribute("class", "hx-border hx-border-o");
+    svg.appendChild(borderLeft);
+
+    const borderRight = document.createElementNS(svgNs, "polygon");
+    borderRight.setAttribute("points", polyPointsFrom(BORDER_RIGHT));
+    borderRight.setAttribute("class", "hx-border hx-border-o");
+    svg.appendChild(borderRight);
+
+    for (const label of BOARD_LABELS) {
+        const text = document.createElementNS(svgNs, "text");
+        text.setAttribute("x", label.x.toFixed(4));
+        text.setAttribute("y", label.y.toFixed(4));
+        text.setAttribute("class", "hx-label");
+        text.textContent = label.text;
+        svg.appendChild(text);
+    }
+
     for (let row = 0; row < SIZE; row++) {
         for (let col = 0; col < SIZE; col++) {
             const cell = idx(row, col);
@@ -229,13 +325,6 @@ export function renderBoard(container, ctx) {
             if (symbol === "X") cls += " mark-x";
             else if (symbol === "O") cls += " mark-o";
             if (lastMoveSet.has(cell)) cls += " last-move";
-            // Kantfärgning (vilken spelare som "äger" den kanten) syns bara
-            // på fortfarande LEDIGA rutor — en placerad sten visar redan sin
-            // egen färg, ytterligare en kantfärg där vore bara brus.
-            if (!symbol) {
-                if (row === 0 || row === SIZE - 1) cls += " hx-edge-x";
-                if (col === 0 || col === SIZE - 1) cls += " hx-edge-o";
-            }
             poly.setAttribute("class", cls);
 
             if (canAct && !symbol) {

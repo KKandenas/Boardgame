@@ -83,10 +83,11 @@ backend. Inga byggverktyg krävs.
   procentuell CSS-positionering som Go/Kvarn. Svart bygger en obruten
   kedja mellan brädets övre och nedre kant, Vitt mellan vänster och höger
   kant — ren placering, ingen fångst eller flytt, sexkantigt (6-vägs)
-  grannskap. De fyra kantraderna/-kolumnerna tonas i respektive spelares
-  färg (samma turkos/rosa som poängraden) så det syns tydligt åt vilket
-  håll var och en bygger, utan att lägga till en extra ram utanför själva
-  brädet. Svap-regeln ("pie rule"): eftersom Svart annars har ett stort
+  grannskap. Fyra färgade ramfält runt sexkantsrutnätet (samma standardlook
+  som referens-Hexbräden) i respektive spelares färg (samma turkos/rosa
+  som poängraden), plus koordinatetiketter (bokstäver/siffror) på alla
+  fyra kanter, gör det tydligt både vad som är själva spelplanen och åt
+  vilket håll var och en bygger. Svap-regeln ("pie rule"): eftersom Svart annars har ett stort
   övertag får Vitt, en gång, som svar på Svarts första drag, "byta sida"
   — transponera den ursprungliga stenen (byt rad/kolumn) och ta över den
   som sin egen, en position som är exakt lika stark som draget var för
