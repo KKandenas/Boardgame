@@ -6,17 +6,17 @@ import {
     createRoom, joinRoom, makeMove, finishRound, markReadyForNext,
     cancelWaitingRoom, listenToOpenRooms,
     forgetRoom, listenToRoom, normalizeCode,
-} from "./rooms.js?v=45";
+} from "./rooms.js?v=46";
 import {
     showScreen, renderLobby, renderGame, setError,
-    renderProfileList, setCurrentProfileLabel, populateStatsFilters, renderStatsResults, renderOpenRooms,
+    renderProfileList, filterProfiles, setCurrentProfileLabel, populateStatsFilters, renderStatsResults, renderOpenRooms,
     populateRulesGamePicker, renderRulesContent,
-} from "./ui.js?v=45";
-import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=45";
+} from "./ui.js?v=46";
+import { getGame, DEFAULT_GAME_ID } from "./games/registry.js?v=46";
 import {
     listProfiles, getOrCreateProfileByName, getStoredProfile, storeProfile, clearStoredProfile, fetchStatsLog,
-} from "./profiles.js?v=45";
-import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=45";
+} from "./profiles.js?v=46";
+import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=46";
 
 // Bumpas manuellt vid varje push så det syns i appen (längst ner) vilken
 // version en telefon faktiskt kör — bra för att felsöka cache-problem.
@@ -25,7 +25,7 @@ import { filterEntries, buildLeaderboard, buildHeadToHead } from "./stats.js?v=4
 // i index.html, annars riskerar olika filer att cachas separat och hamna
 // i otakt — vilket var precis orsaken till att "rummet hittades inte"
 // kvarstod trots att fixen redan var pushad.
-export const APP_VERSION = "build 45 · 2026-08-08";
+export const APP_VERSION = "build 46 · 2026-08-08";
 
 let currentCode = null;
 let myPlayerId = null;
@@ -119,15 +119,32 @@ function buildShareUrl(code) {
 }
 
 // --- Profilväljare ---
-async function refreshProfileList() {
+// Sökfältet visas bara när listan är tillräckligt lång för att bli rörig
+// att skanna igenom för hand.
+const PROFILE_SEARCH_THRESHOLD = 7;
+let allProfiles = [];
+
+function renderFilteredProfileList() {
     const list = document.getElementById("profile-list");
+    const query = document.getElementById("profile-search").value;
+    const visible = filterProfiles(allProfiles, query);
+    const emptyMessage = query.trim() ? "Ingen profil matchar sökningen." : undefined;
+    renderProfileList(list, visible, onProfilePicked, emptyMessage);
+}
+
+async function refreshProfileList() {
+    const searchInput = document.getElementById("profile-search");
     try {
-        const profiles = await listProfiles();
-        renderProfileList(list, profiles, onProfilePicked);
+        allProfiles = await listProfiles();
+        searchInput.classList.toggle("hidden", allProfiles.length <= PROFILE_SEARCH_THRESHOLD);
+        searchInput.value = "";
+        renderFilteredProfileList();
     } catch {
         setError("profile", "Kunde inte hämta profiler. Försök igen.");
     }
 }
+
+document.getElementById("profile-search").addEventListener("input", renderFilteredProfileList);
 
 function onProfilePicked(profile) {
     myProfile = profile;

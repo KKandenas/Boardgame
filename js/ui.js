@@ -4,8 +4,8 @@
 // här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
 // från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells } from "./games/shared.js?v=45";
-import { getGame, GAME_LIST } from "./games/registry.js?v=45";
+import { boardToCells } from "./games/shared.js?v=46";
+import { getGame, GAME_LIST } from "./games/registry.js?v=46";
 
 const screens = {
     profile: document.getElementById("screen-profile"),
@@ -198,23 +198,53 @@ export function setError(screenName, message) {
 }
 
 // --- Profilväljare ---
-export function renderProfileList(container, profiles, onSelect) {
+// Deterministisk avatarfärg per profil (samma namn -> samma färg varje
+// gång, utan att behöva spara något extra i databasen) — gör det lättare
+// att känna igen sin egen profil i en lång lista på nytt.
+const AVATAR_HUES = [4, 24, 44, 84, 152, 172, 200, 224, 262, 300, 330];
+
+function avatarHue(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
+    return AVATAR_HUES[Math.abs(hash) % AVATAR_HUES.length];
+}
+
+export function renderProfileList(container, profiles, onSelect, emptyMessage) {
     container.innerHTML = "";
     if (profiles.length === 0) {
         const empty = document.createElement("p");
         empty.className = "status-text";
-        empty.textContent = "Inga profiler ännu — skapa den första nedan.";
+        empty.textContent = emptyMessage || "Inga profiler ännu — skapa den första nedan.";
         container.appendChild(empty);
         return;
     }
     for (const profile of profiles) {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "btn btn-secondary profile-btn";
-        btn.textContent = profile.name;
+        btn.className = "profile-row";
+
+        const avatar = document.createElement("span");
+        avatar.className = "profile-avatar";
+        avatar.style.background = `hsl(${avatarHue(profile.name)} 55% 42%)`;
+        avatar.textContent = profile.name.trim().slice(0, 1).toUpperCase();
+        avatar.setAttribute("aria-hidden", "true");
+
+        const name = document.createElement("span");
+        name.className = "profile-row-name";
+        name.textContent = profile.name;
+
+        btn.append(avatar, name);
         btn.addEventListener("click", () => onSelect(profile));
         container.appendChild(btn);
     }
+}
+
+// Filtrerar en profillista på fritext (namnsök, skiftlägesokänsligt) —
+// använd tillsammans med sökfältet som bara visas när listan är lång.
+export function filterProfiles(profiles, query) {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return profiles;
+    return profiles.filter((p) => p.name.toLowerCase().includes(needle));
 }
 
 export function setCurrentProfileLabel(name) {
