@@ -4,8 +4,8 @@
 // här filen. Vet ingenting om enskilda spels regler — allt sådant kommer
 // från den aktuella spelmodulen (js/games/registry.js) via room.gameId.
 
-import { boardToCells } from "./games/shared.js?v=34";
-import { getGame, GAME_LIST } from "./games/registry.js?v=34";
+import { boardToCells } from "./games/shared.js?v=35";
+import { getGame, GAME_LIST } from "./games/registry.js?v=35";
 
 const screens = {
     profile: document.getElementById("screen-profile"),
@@ -131,12 +131,14 @@ export function renderGame(room, myPlayerId, selectedCell = null, callbacks = {}
         const cellCount = game.meta.rows * game.meta.cols;
         const cells = boardToCells(round.board, cellCount);
         const winSet = new Set(round.winLine || []);
+        const lastMoveSet = new Set(round.lastMove?.cells || []);
         for (let i = 0; i < cellCount; i++) {
             const cellEl = document.getElementById(`cell-${i}`);
             cellEl.textContent = game.meta.showGlyph ? (cells[i] || "") : "";
             cellEl.classList.toggle("mark-x", cells[i] === "X");
             cellEl.classList.toggle("mark-o", cells[i] === "O");
             cellEl.classList.toggle("win", winSet.has(i));
+            cellEl.classList.toggle("last-move", lastMoveSet.has(i));
             cellEl.classList.toggle("selected", selectedCell === i);
 
             const canInteract = game.cellInteractable({

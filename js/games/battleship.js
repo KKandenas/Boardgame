@@ -11,7 +11,7 @@
 // Ren spellogik (inga sidoeffekter, inget DOM/Firebase) + renderBoard
 // (eget bräde — två hav, inte det generiska rutnätet).
 
-import { otherSymbolOf } from "./shared.js?v=34";
+import { otherSymbolOf } from "./shared.js?v=35";
 
 export const meta = {
     id: "battleship",
@@ -158,10 +158,15 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
         const board = { ...round.board, shots, fleets };
 
         const allSunk = newShips.every((s) => s.hits.every(Boolean));
+        // `symbol` behövs i renderingen för att avgöra VILKET av de två
+        // haven skottet ska markeras på (den som sköt ser det på sitt eget
+        // "motståndarens hav", den som blev träffad ser det på sitt "mitt
+        // hav") — samma cellindex existerar annars på båda haven.
+        const lastMove = { cell, symbol: mySymbol };
         if (allSunk) {
-            return { ...round, board, winner: mySymbol, winLine: null };
+            return { ...round, board, winner: mySymbol, winLine: null, lastMove };
         }
-        return { ...round, board, turn: otherPlayerId };
+        return { ...round, board, turn: otherPlayerId, lastMove };
     }
 
     return round;
@@ -335,6 +340,18 @@ function renderShotMarker(grid, cellIndex, status, sunk) {
     const marker = document.createElement("div");
     marker.className = `ss-shot-marker ${status}`;
     marker.classList.toggle("sunk", !!sunk);
+    const row = Math.floor(cellIndex / GRID_SIZE);
+    const col = cellIndex % GRID_SIZE;
+    marker.style.gridColumn = String(col + 1);
+    marker.style.gridRow = String(row + 1);
+    grid.appendChild(marker);
+}
+
+// Ring runt senaste avfyrade rutan — eget lager OVANPÅ träff/miss-markören
+// (som redan finns permanent), samma teknik/motivering som renderShotMarker.
+function renderLastMoveMarker(grid, cellIndex) {
+    const marker = document.createElement("div");
+    marker.className = "ss-last-move";
     const row = Math.floor(cellIndex / GRID_SIZE);
     const col = cellIndex % GRID_SIZE;
     marker.style.gridColumn = String(col + 1);
@@ -546,6 +563,16 @@ function renderBattleBoards(container, ctx) {
         } else if (shot === "miss") {
             renderShotMarker(targetGrid, i, "miss", false);
         }
+    }
+
+    // Senaste skottet: den som sköt ser det på sitt EGET "motståndarens
+    // hav" (targetGrid, byggt av myShots); den som blev träffad ser det på
+    // sitt EGET "mitt hav" (ownGrid) — samma cellindex finns på båda haven,
+    // så vi måste veta VEM som sköt (round.lastMove.symbol) för att välja
+    // rätt rutnät, annars hamnar ringen på fel spelares hav.
+    if (round.lastMove) {
+        const grid = round.lastMove.symbol === mySymbol ? targetGrid : ownGrid;
+        renderLastMoveMarker(grid, round.lastMove.cell);
     }
 }
 

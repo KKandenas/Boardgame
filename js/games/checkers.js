@@ -25,7 +25,7 @@
 //   ingen "flygande dam" och inget forcerat oavgjort vid upprepning/
 //   för många drag utan slag.
 
-import { otherSymbolOf } from "./shared.js?v=34";
+import { otherSymbolOf } from "./shared.js?v=35";
 
 export const meta = {
     id: "checkers",
@@ -190,7 +190,15 @@ export function applyAction(round, action, playerId, mySymbol, otherPlayerId) {
         winner = mySymbol; // motståndaren är helt blockerad — förlust, inte oavgjort
     }
 
-    return { ...round, board: nextBoard, turn: nextTurn, mustContinueFrom, winner, winLine: null };
+    return {
+        ...round,
+        board: nextBoard,
+        turn: nextTurn,
+        mustContinueFrom,
+        winner,
+        winLine: null,
+        lastMove: { cells: [from, to] },
+    };
 }
 
 export function statusText({ round, myTurn, mySymbol }) {
@@ -222,6 +230,7 @@ export function renderBoard(container, ctx) {
             : legalSimpleMovesForPiece(board, selectedCell);
     }
     const hintSet = new Set(hintMoves);
+    const lastMoveSet = new Set(round.lastMove?.cells || []);
 
     function canSelect(index) {
         const piece = board[index];
@@ -272,6 +281,7 @@ export function renderBoard(container, ctx) {
 
             btn.classList.toggle("selected", selectedCell === i);
             btn.classList.toggle("hint", hintSet.has(i));
+            btn.classList.toggle("last-move", lastMoveSet.has(i));
             btn.disabled = !canAct || !(hintSet.has(i) || canSelect(i));
             btn.addEventListener("click", () => handleClick(i));
             grid.appendChild(btn);
